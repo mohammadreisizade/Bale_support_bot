@@ -76,7 +76,7 @@ foreach ($data as $u) {
                 // محاسبه فاصله زمانی به صورت ساعت
                 $timeDiffInHours = $timeDiffInSeconds / 3600;
 
-                if ($timeDiffInHours <= 48) {
+                if ($timeDiffInHours <= 24) {
                     $counter++;
                     $title = $row['title'];
                     $id = $row['id'];

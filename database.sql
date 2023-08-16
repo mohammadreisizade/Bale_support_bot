@@ -9,7 +9,7 @@ CREATE TABLE Persons (
 
 CREATE TABLE Requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(100),
+    name VARCHAR(100),
     unit SMALLINT,
     created_by BIGINT,
     title VARCHAR(200),
