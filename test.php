@@ -91,11 +91,11 @@ function delete_undone_request($conn, $bb)
 function accounting_clipboard($bot, $chat_id)
 {
     $inlineKeyboardoption = [
-        $bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqacc"),
-        $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq"),
-        $bot->buildInlineKeyBoardButton("درخواست های بررسی نشده", '', "openreqacc"),
-        $bot->buildInlineKeyBoardButton("درخواست های تأیید شده", '', "confirmed_requests"),
-        $bot->buildInlineKeyBoardButton("همه درخواست های مربوط به من", '', "everything"),
+        [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqacc"),
+        $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq")],
+        [$bot->buildInlineKeyBoardButton("درخواست های بررسی نشده", '', "openreqacc")],
+        [$bot->buildInlineKeyBoardButton("درخواست های تأیید شده", '', "confirmed_requests")],
+        [$bot->buildInlineKeyBoardButton("همه درخواست های مربوط به من", '', "everything")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
@@ -105,8 +105,8 @@ function accounting_clipboard($bot, $chat_id)
 function projectmanager_clipboard($bot, $chat_id)
 {
     $inlineKeyboardoption = [
-        $bot->buildInlineKeyBoardButton("ثبت درخواست جدید", '', "paymentreq"),
-        $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq"),
+        [$bot->buildInlineKeyBoardButton("ثبت درخواست جدید", '', "paymentreq")],
+        [$bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -116,16 +116,32 @@ function projectmanager_clipboard($bot, $chat_id)
 function admin_clipboard($bot, $chat_id)
 {
     $inlineKeyboardoption = [
-        $bot->buildInlineKeyBoardButton("تنظیمات", '', "setting"),
-        $bot->buildInlineKeyBoardButton("ثبت درخواست جدید", '', "admin_new_req"),
-        $bot->buildInlineKeyBoardButton("همه درخواست ها", '', "everything"),
-        $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq"),
-        $bot->buildInlineKeyBoardButton("کاربران سامانه", '', "admin_users_list"),
-        $bot->buildInlineKeyBoardButton("خروجی اکسل", '', "adminexcel"),
+        [$bot->buildInlineKeyBoardButton("ثبت درخواست جدید", '', "admin_new_req")],
+        [$bot->buildInlineKeyBoardButton("همه درخواست ها", '', "everything"),
+        $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq")],
+        [$bot->buildInlineKeyBoardButton("کاربران سامانه", '', "admin_users_list"),
+        $bot->buildInlineKeyBoardButton("تنظیمات", '', "setting")],
+        [$bot->buildInlineKeyBoardButton("خروجی اکسل", '', "adminexcel")],
 
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
+
+//    $inlineKeyboardoption = [
+//        [['text' => 'تنظیمات', 'callback_data' => 'setting']],
+//        [['text' => '2', 'callback_data' => 'k=2']],
+//        [['text' => '3', 'callback_data' => 'k=3']],
+//        [['text' => '4', 'callback_data' => 'k=4']],
+//        [['text' => '5', 'callback_data' => 'k=5']],
+//        [['text' => '6', 'callback_data' => 'k=6']]
+//    ];
+//    $replyMarkup = array (
+//        'inline_keyboard' =>
+//            $inlineKeyboardoption
+//    );
+//    $encodedMarkup = ($replyMarkup);
+//    $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $replyMarkup);
+
     $bot->sendText($contenttmp);
 }
 
@@ -187,10 +203,10 @@ function create_new_req($conn, $bot, $bb, $chat_id)
       VALUES (1, 7,$bb)";
     $conn->query($qu);
     $inlineKeyboardoption = [
-        $bot->buildInlineKeyBoardButton("انفورماتیک", '', "choose_informatic"),
-        $bot->buildInlineKeyBoardButton("پشتیبانی", '', "choose_support"),
-        $bot->buildInlineKeyBoardButton("خدمات", '', "choose_services"),
-        $bot->buildInlineKeyBoardButton("مالی", '', "choose_financial"),
+        [$bot->buildInlineKeyBoardButton("انفورماتیک", '', "choose_informatic"),
+        $bot->buildInlineKeyBoardButton("پشتیبانی", '', "choose_support")],
+        [$bot->buildInlineKeyBoardButton("خدمات", '', "choose_services"),
+        $bot->buildInlineKeyBoardButton("مالی", '', "choose_financial")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $contenttmp = array('chat_id' => $chat_id, "text" => "لطفا واحد درخواست دهنده را از گزینه های زیر انتخاب کنید.", 'reply_markup' => $Keyboard);
@@ -249,8 +265,8 @@ function req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi)
                         $conn->query($q_up);
 
                         $inlineKeyboardoption = [
-                            $bot->buildInlineKeyBoardButton("تأیید", '', "conf_pm"),
-                            $bot->buildInlineKeyBoardButton("انصراف", '', "cancle_pm"),
+                            [$bot->buildInlineKeyBoardButton("تأیید", '', "conf_pm"),
+                            $bot->buildInlineKeyBoardButton("انصراف", '', "cancle_pm")],
                         ];
                         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                         $contenttmp = array('chat_id' => $chat_id, "text" => "ثبت درخواست", 'reply_markup' => $Keyboard);
@@ -338,7 +354,7 @@ function my_req($conn, $bot, $chat_id, $bb)
                             $cbdatasubmitrate = "j$id";
 
                             $inlineKeyboardoption = [
-                                $bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate"),
+                                [$bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate")],
                             ];
                             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                             $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r", 'reply_markup' => $Keyboard);
@@ -1203,7 +1219,7 @@ if (in_array($chat_id, $ceoceo)) {
     if ($Text_orgi == "/start") {
         delete_undone_request($conn, $bb);
         $inlineKeyboardoption = [
-            $bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo"),
+            [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
         ];
         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
         $contenttmp = array('chat_id' => $chat_id, "text" => "انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -1327,7 +1343,7 @@ if ($callback_data[0] == "x") {
 
         $cbdatasubmitrate = "j$id";
         $inlineKeyboardoption = [
-            $bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate"),
+            [$bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate")],
         ];
         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
         $content = array("chat_id" => $requestor, "text" => "درخواست شما با مشخصات زیر توسط واحد $u انجام شد:\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time", 'reply_markup' => $Keyboard);
@@ -1345,11 +1361,11 @@ if ($callback_data[0] == "x") {
     $full = "k$getcbdata";
 
     $inlineKeyboardoption = [
-        $bot->buildInlineKeyBoardButton("عدم رضایت", '', "$no"),
-        $bot->buildInlineKeyBoardButton("رضایت کم", '', "$low"),
-        $bot->buildInlineKeyBoardButton("رضایت نسبی", '', "$kinda"),
-        $bot->buildInlineKeyBoardButton("رضایت متوسط", '', "$average"),
-        $bot->buildInlineKeyBoardButton("رضایت کامل", '', "$full"),
+        [$bot->buildInlineKeyBoardButton("عدم رضایت", '', "$no"),
+        $bot->buildInlineKeyBoardButton("رضایت کم", '', "$low")],
+        [$bot->buildInlineKeyBoardButton("رضایت نسبی", '', "$kinda"),
+        $bot->buildInlineKeyBoardButton("رضایت متوسط", '', "$average")],
+        [$bot->buildInlineKeyBoardButton("رضایت کامل", '', "$full")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $content = array("chat_id" => $chat_id, "text" => "لطفا میزان رضایت خود را از بین گزینه های زیر انتخاب کنید.", 'reply_markup' => $Keyboard);
@@ -1450,12 +1466,12 @@ if ($chat_id == $admin) {
                             $q_up = "UPDATE Persons SET username='$Text_orgi', status='getpos' WHERE status='getuser'";
                             $result = $conn->query($q_up);
                             $inlineKeyboardoption = [
-                                $bot->buildInlineKeyBoardButton("مدیر واحد", '', "ppm"),
-                                $bot->buildInlineKeyBoardButton("انفورماتیک", '', "p_anformatic"),
-                                $bot->buildInlineKeyBoardButton("مالی", '', "p_financial"),
-                                $bot->buildInlineKeyBoardButton("پشتیبانی", '', "p_support"),
-                                $bot->buildInlineKeyBoardButton("خدمات", '', "p_service"),
-                                $bot->buildInlineKeyBoardButton("مدیر عامل", '', "pseo"),
+                                [$bot->buildInlineKeyBoardButton("مدیر واحد", '', "ppm"),
+                                $bot->buildInlineKeyBoardButton("انفورماتیک", '', "p_anformatic")],
+                                [$bot->buildInlineKeyBoardButton("مالی", '', "p_financial"),
+                                $bot->buildInlineKeyBoardButton("پشتیبانی", '', "p_support")],
+                                [$bot->buildInlineKeyBoardButton("خدمات", '', "p_service"),
+                                $bot->buildInlineKeyBoardButton("مدیر عامل", '', "pseo")],
 
                             ];
                             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
@@ -1507,13 +1523,13 @@ if ($chat_id == $admin) {
                                     }
                                 }
                                 $inlineKeyboardoption = [
-                                    $bot->buildInlineKeyBoardButton("مدیر واحد", '', "changetopm"),
-                                    $bot->buildInlineKeyBoardButton("انفورماتیک", '', "changetoinformatic"),
-                                    $bot->buildInlineKeyBoardButton("مالی", '', "changetofinancial"),
-                                    $bot->buildInlineKeyBoardButton("پشتیبانی", '', "changetosupport"),
-                                    $bot->buildInlineKeyBoardButton("خدمات", '', "changetoservice"),
-                                    $bot->buildInlineKeyBoardButton("مدیر عامل", '', "changetoceo"),
-                                    $bot->buildInlineKeyBoardButton("حذف این شخص", '', "changeremove"),
+                                    [$bot->buildInlineKeyBoardButton("مدیر واحد", '', "changetopm"),
+                                    $bot->buildInlineKeyBoardButton("انفورماتیک", '', "changetoinformatic")],
+                                    [$bot->buildInlineKeyBoardButton("مالی", '', "changetofinancial"),
+                                    $bot->buildInlineKeyBoardButton("پشتیبانی", '', "changetosupport")],
+                                    [$bot->buildInlineKeyBoardButton("خدمات", '', "changetoservice"),
+                                    $bot->buildInlineKeyBoardButton("مدیر عامل", '', "changetoceo")],
+                                    [$bot->buildInlineKeyBoardButton("حذف این شخص", '', "changeremove")],
                                 ];
                                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                                 $contenttmp = array('chat_id' => $chat_id, "text" => "سمت این شخص $stat است.سمت مدنظر خود را برای این شخص انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -1725,8 +1741,8 @@ switch ($callback_data) {
                                 $cbdataaccept = "x$id";
                                 $rejectreq = "r$id";
                                 $inlineKeyboardoption = [
-                                    $bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
-                                    $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept"),
+                                    [$bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
+                                    $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept")],
                                 ];
                                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                                 $content = array("chat_id" => $u, "text" => "درخواست جدید:\nنام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time", 'reply_markup' => $Keyboard);
@@ -1747,7 +1763,7 @@ switch ($callback_data) {
                 projectmanager_clipboard($bot, $chat_id);
             } elseif (in_array($chat_id, $ceoceo)) {
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo"),
+                    [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
@@ -1780,7 +1796,7 @@ switch ($callback_data) {
                             admin_clipboard($bot, $chat_id);
                         } elseif (in_array($chat_id, $ceoceo)) {
                             $inlineKeyboardoption = [
-                                $bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo"),
+                                [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
                             ];
                             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                             $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
@@ -1831,8 +1847,8 @@ switch ($callback_data) {
                         $rejectreq = "r$id";
 
                         $inlineKeyboardoption = [
-                            $bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
-                            $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept"),
+                            [$bot->buildInlineKeyBoardButton("عدم تأیید", '', "$rejectreq"),
+                            $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept")],
                         ];
                         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                         $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ درخواست : $date\nساعت درخواست : $time", 'reply_markup' => $Keyboard);
@@ -1885,7 +1901,7 @@ switch ($callback_data) {
                         $cbdatadone = "d$id";
 
                         $inlineKeyboardoption = [
-                            $bot->buildInlineKeyBoardButton("انجام شده", '', "$cbdatadone"),
+                            [$bot->buildInlineKeyBoardButton("انجام شده", '', "$cbdatadone")],
                         ];
                         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                         $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time", 'reply_markup' => $Keyboard);
@@ -1922,9 +1938,9 @@ switch ($callback_data) {
             reset_admin($conn, $bb);
 
             $inlineKeyboardoption = [
-                $bot->buildInlineKeyBoardButton("افزودن سمت", '', "newpost"),
-                $bot->buildInlineKeyBoardButton("تغییر سمت", '', "changepost"),
-                $bot->buildInlineKeyBoardButton("تغییر یوزرنیم", '', "changeusername"),
+                [$bot->buildInlineKeyBoardButton("افزودن سمت", '', "newpost")],
+                [$bot->buildInlineKeyBoardButton("تغییر سمت", '', "changepost")],
+                [$bot->buildInlineKeyBoardButton("تغییر یوزرنیم", '', "changeusername")],
             ];
             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
             $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -1979,8 +1995,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : مدیر واحد");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2004,8 +2020,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : انفورماتیک");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2028,8 +2044,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : بخش مالی");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2052,8 +2068,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : پشتیبانی");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2076,8 +2092,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : خدمات");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2100,8 +2116,8 @@ switch ($callback_data) {
                 $content = array("chat_id" => $chat_id, "text" => "نام : $nam\nیوزرنیم : $un\nسمت : مدیر عامل");
                 $bot->sendText($content);
                 $inlineKeyboardoption = [
-                    $bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
-                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate"),
+                    [$bot->buildInlineKeyBoardButton("تأیید", '', "confcreate"),
+                    $bot->buildInlineKeyBoardButton("انصراف", '', "canclecreate")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
                 $contenttmp = array('chat_id' => $chat_id, "text" => "تأیید می کنید؟", 'reply_markup' => $Keyboard);
@@ -2307,11 +2323,11 @@ switch ($callback_data) {
             reset_admin($conn, $bb);
 
             $inlineKeyboardoption = [
-                $bot->buildInlineKeyBoardButton("درخواست های انجام شده", '', "adminexceldone"),
-                $bot->buildInlineKeyBoardButton("درخواست های تأیید شده", '', "adminexcelaccept"),
-                $bot->buildInlineKeyBoardButton("درخواست های رد شده", '', "adminexcelreject"),
-                $bot->buildInlineKeyBoardButton("درخواست های بررسی نشده", '', "adminexcelopen"),
-                $bot->buildInlineKeyBoardButton("تمام درخواست ها", '', "adminexcelall"),
+                [$bot->buildInlineKeyBoardButton("درخواست های انجام شده", '', "adminexceldone")],
+                [$bot->buildInlineKeyBoardButton("درخواست های تأیید شده", '', "adminexcelaccept")],
+                [$bot->buildInlineKeyBoardButton("درخواست های رد شده", '', "adminexcelreject")],
+                [$bot->buildInlineKeyBoardButton("درخواست های بررسی نشده", '', "adminexcelopen")],
+                [$bot->buildInlineKeyBoardButton("تمام درخواست ها", '', "adminexcelall")],
             ];
             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
             $contenttmp = array('chat_id' => $chat_id, "text" => "گزارش مورد نظر خود را انتخاب کنید(1000 مورد آخر خروجی گرفته میشود):", 'reply_markup' => $Keyboard);

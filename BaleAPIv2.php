@@ -540,7 +540,7 @@ if(is_string($arr['prices']) or is_int($arr['prices']) or is_integer($arr['price
     {
         $replyMarkup = array (
 		  'inline_keyboard' => 
-			array ( $options )
+			$options
 		);
         $encodedMarkup = ($replyMarkup);
         return $replyMarkup;

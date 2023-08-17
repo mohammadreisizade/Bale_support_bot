@@ -121,6 +121,8 @@ function admin_clipboard($bot, $chat_id)
         $bot->buildInlineKeyBoardButton("همه درخواست ها", '', "everything"),
         $bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq"),
         $bot->buildInlineKeyBoardButton("کاربران سامانه", '', "admin_users_list"),
+        $bot->buildInlineKeyBoardButton("خروجی اکسل", '', "adminexcel"),
+
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
     $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -515,6 +517,442 @@ function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
     }
 }
 
+function export_excel_all($conn, $bot, $chat_id)
+{
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 2 OR is_closed = 3 OR is_closed = 4 ORDER BY register_date DESC, register_time DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows != 0) {
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+// اضافه کردن عنوان‌ها به اکسل
+        $sheet->setCellValue('A1', 'نام');
+        $sheet->setCellValue('B1', 'عنوان');
+        $sheet->setCellValue('C1', 'توضیحات');
+        $sheet->setCellValue('D1', 'واحد مربوط');
+        $sheet->setCellValue('E1', 'وضعیت');
+        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
+        $sheet->setCellValue('K1', 'تاریخ تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('L1', 'ساعت تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('M1', 'میزان رضایت');
+        $sheet->setCellValue('N1', 'دلیل رد درخواست');
+        $sheet->setCellValue('O1', 'تاریخ رد درخواست');
+        $sheet->setCellValue('P1', 'ساعت رد درخواست');
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            if ($row['req_status'] == 9) {
+                $req_status = "انجام شده";
+            } elseif ($row['req_status'] == 3) {
+                $req_status = "تأیید شده";
+            } elseif ($row['req_status'] == 2) {
+                $req_status = "رد شده";
+            } elseif ($row['req_status'] == 1) {
+                $req_status = "در انتظار بررسی";
+            } else {
+                $req_status = "---";
+            }
+
+            $unit = $row['unit'];
+            if ($unit == 2) {
+                $uni = "انفورماتیک";
+            } elseif ($unit == 3) {
+                $uni = "مالی";
+            } elseif ($unit == 4) {
+                $uni = "پشتیبانی";
+            } elseif ($unit == 5) {
+                $uni = "خدمات";
+            } else {
+                $uni = "---";
+            }
+
+            $rate = $row['rate'];
+            if ($rate == 1) {
+                $r = "عدم رضایت";
+            } elseif ($rate == 2) {
+                $r = "رضایت کم";
+            } elseif ($rate == 3) {
+                $r = "رضایت نسبی";
+            } elseif ($rate == 4) {
+                $r = "رضایت متوسط";
+            } elseif ($rate == 5) {
+                $r = "رضایت کامل";
+            } else {
+                $r = "ثبت نشده";
+            }
+
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
+            $sheet->setCellValue('D' . $rowNumber, $uni);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['done_date'] ?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['done_time'] ?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $r);
+            $sheet->setCellValue('N' . $rowNumber, $row['reason'] ?? "---");
+            $sheet->setCellValue('O' . $rowNumber, $row['reject_date'] ?? "---");
+            $sheet->setCellValue('P' . $rowNumber, $row['reject_time'] ?? "---");
+            $rowNumber++;
+        }
+        $objPHPExcel->getActiveSheet()->setTitle('Simple');
+        $objPHPExcel->setActiveSheetIndex(0);
+        $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $temp_path = 'public_html/reports_all_' . $temp_name . '.xlsx';
+        $objWriter->save($temp_path);
+        $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/' . $temp_path);
+        $bot->sendDocument($contentdoc);
+        unlink($temp_path);
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+}
+
+function export_excel_reject($conn, $bot, $chat_id)
+{
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 2 AND req_status = 2 ORDER BY reject_date DESC, reject_time DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows != 0) {
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+// اضافه کردن عنوان‌ها به اکسل
+        $sheet->setCellValue('A1', 'نام');
+        $sheet->setCellValue('B1', 'عنوان');
+        $sheet->setCellValue('C1', 'توضیحات');
+        $sheet->setCellValue('D1', 'واحد مربوط');
+        $sheet->setCellValue('E1', 'وضعیت');
+        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('H1', 'دلیل رد درخواست');
+        $sheet->setCellValue('I1', 'تاریخ رد درخواست');
+        $sheet->setCellValue('J1', 'ساعت رد درخواست');
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            $req_status = "رد شده";
+
+            $unit = $row['unit'];
+            if ($unit == 2) {
+                $uni = "انفورماتیک";
+            } elseif ($unit == 3) {
+                $uni = "مالی";
+            } elseif ($unit == 4) {
+                $uni = "پشتیبانی";
+            } elseif ($unit == 5) {
+                $uni = "خدمات";
+            } else {
+                $uni = "---";
+            }
+
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
+            $sheet->setCellValue('D' . $rowNumber, $uni);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('H' . $rowNumber, $row['reason'] ?? "---");
+            $sheet->setCellValue('I' . $rowNumber, $row['reject_date'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['reject_time'] ?? "---");
+            $rowNumber++;
+        }
+        $objPHPExcel->getActiveSheet()->setTitle('Simple');
+        $objPHPExcel->setActiveSheetIndex(0);
+        $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $temp_path = 'public_html/reports_rejected_' . $temp_name . '.xlsx';
+        $objWriter->save($temp_path);
+        $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/' . $temp_path);
+        $bot->sendDocument($contentdoc);
+        unlink($temp_path);
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+}
+
+function export_excel_accept($conn, $bot, $chat_id)
+{
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 3 ORDER BY accept_date DESC, accept_time DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows != 0) {
+
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+// اضافه کردن عنوان‌ها به اکسل
+        $sheet->setCellValue('A1', 'نام');
+        $sheet->setCellValue('B1', 'عنوان');
+        $sheet->setCellValue('C1', 'توضیحات');
+        $sheet->setCellValue('D1', 'واحد مربوط');
+        $sheet->setCellValue('E1', 'وضعیت');
+        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
+
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            $req_status = "تأیید شده";
+
+            $unit = $row['unit'];
+            if ($unit == 2) {
+                $uni = "انفورماتیک";
+            } elseif ($unit == 3) {
+                $uni = "مالی";
+            } elseif ($unit == 4) {
+                $uni = "پشتیبانی";
+            } elseif ($unit == 5) {
+                $uni = "خدمات";
+            } else {
+                $uni = "---";
+            }
+
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
+            $sheet->setCellValue('D' . $rowNumber, $uni);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
+
+            $rowNumber++;
+        }
+
+        $objPHPExcel->getActiveSheet()->setTitle('Simple');
+        $objPHPExcel->setActiveSheetIndex(0);
+        $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $temp_path = 'public_html/reports_accepted_' . $temp_name . '.xlsx';
+        $objWriter->save($temp_path);
+        $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/' . $temp_path);
+        $bot->sendDocument($contentdoc);
+        unlink($temp_path);
+
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+}
+
+function export_excel_open($conn, $bot, $chat_id)
+{
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 2 AND req_status = 1 ORDER BY register_date DESC, register_time DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows != 0) {
+
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+// اضافه کردن عنوان‌ها به اکسل
+        $sheet->setCellValue('A1', 'نام');
+        $sheet->setCellValue('B1', 'عنوان');
+        $sheet->setCellValue('C1', 'توضیحات');
+        $sheet->setCellValue('D1', 'واحد مربوط');
+        $sheet->setCellValue('E1', 'وضعیت');
+        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            $req_status = "در انتظار بررسی";
+
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $unit = $row['unit'];
+            if ($unit == 2) {
+                $uni = "انفورماتیک";
+            } elseif ($unit == 3) {
+                $uni = "مالی";
+            } elseif ($unit == 4) {
+                $uni = "پشتیبانی";
+            } elseif ($unit == 5) {
+                $uni = "خدمات";
+            } else {
+                $uni = "---";
+            }
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description);
+            $sheet->setCellValue('D' . $rowNumber, $uni);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+
+            $rowNumber++;
+        }
+
+        $objPHPExcel->getActiveSheet()->setTitle('Simple');
+        $objPHPExcel->setActiveSheetIndex(0);
+        $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $temp_path = 'public_html/reports_registered_' . $temp_name . '.xlsx';
+        $objWriter->save($temp_path);
+        $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/' . $temp_path);
+        $bot->sendDocument($contentdoc);
+        unlink($temp_path);
+
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+
+}
+
+function export_excel_done($conn, $bot, $chat_id)
+{
+
+    $sql = "SELECT * FROM Requests WHERE is_closed = 4 ORDER BY done_date DESC, done_time DESC LIMIT 1000";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows != 0) {
+
+        $objPHPExcel = new PHPExcel();
+        $sheet = $objPHPExcel->setActiveSheetIndex(0);
+
+// اضافه کردن عنوان‌ها به اکسل
+        $sheet->setCellValue('A1', 'نام');
+        $sheet->setCellValue('B1', 'عنوان');
+        $sheet->setCellValue('C1', 'توضیحات');
+        $sheet->setCellValue('D1', 'واحد مربوط');
+        $sheet->setCellValue('E1', 'وضعیت');
+        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
+        $sheet->setCellValue('K1', 'تاریخ تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('L1', 'ساعت تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('M1', 'میزان رضایت');
+
+        $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
+        while ($row = $result->fetch_assoc()) {
+
+            $req_status = "انجام شده";
+
+            $unit = $row['unit'];
+            if ($unit == 2) {
+                $uni = "انفورماتیک";
+            } elseif ($unit == 3) {
+                $uni = "مالی";
+            } elseif ($unit == 4) {
+                $uni = "پشتیبانی";
+            } elseif ($unit == 5) {
+                $uni = "خدمات";
+            } else {
+                $uni = "---";
+            }
+
+            $rate = $row['rate'];
+            if ($rate == 1) {
+                $r = "عدم رضایت";
+            } elseif ($rate == 2) {
+                $r = "رضایت کم";
+            } elseif ($rate == 3) {
+                $r = "رضایت نسبی";
+            } elseif ($rate == 4) {
+                $r = "رضایت متوسط";
+            } elseif ($rate == 5) {
+                $r = "رضایت کامل";
+            } else {
+                $r = "ثبت نشده";
+            }
+
+            $name = $row['name'];
+            $title = $row['title'];
+            $description = $row['description'];
+
+            $sheet->setCellValue('A' . $rowNumber, $name);
+            $sheet->setCellValue('B' . $rowNumber, $title);
+            $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
+            $sheet->setCellValue('D' . $rowNumber, $uni);
+            $sheet->setCellValue('E' . $rowNumber, $req_status);
+            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['done_date'] ?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['done_time'] ?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $r);
+
+            $rowNumber++;
+        }
+
+        $objPHPExcel->getActiveSheet()->setTitle('Simple');
+        $objPHPExcel->setActiveSheetIndex(0);
+        $temp_name = date('Y-m-d--H-i-s');
+// ذخیره کردن فایل اکسل
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $temp_path = 'public_html/reports_done_' . $temp_name . '.xlsx';
+        $objWriter->save($temp_path);
+        $contentdoc = array('chat_id' => $chat_id, "document" => 'http://balebot.balebt.ir/' . $temp_path);
+        $bot->sendDocument($contentdoc);
+        unlink($temp_path);
+
+    } else {
+        $content = array("chat_id" => $chat_id, "text" => "موردی برای گزارش یافت نشد.");
+        $bot->sendText($content);
+    }
+
+}
+
+function reset_admin($conn, $bb){
+    delete_undone_request($conn, $bb);
+    delete_half_made_user($conn);
+    stop_changing($conn);
+//    stop_reason_message($conn, $bb);
+    delete_get_num($conn, $bb);
+}
+function reset_unit($conn, $bb){
+    delete_undone_request($conn, $bb);
+    stop_reason_message($conn, $bb);
+    delete_get_num($conn, $bb);
+}
 // ---------------------------------------------------------------------------------------------------------------------------
 
 $token = "879112410:dTpufLCe78gh27C5mli5iEZSmFbpM9mqcStBi99V";
@@ -975,10 +1413,9 @@ if ($callback_data[0] == "x") {
 
 if ($chat_id == $admin) {
     if ($Text_orgi == "/start") {
-        delete_half_made_user($conn);
-        stop_changing($conn);
-        delete_get_num($conn, $bb);
+        reset_admin($conn, $bb);
         admin_clipboard($bot, $chat_id);
+
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
         manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position);
@@ -1131,9 +1568,7 @@ if ($chat_id == $admin) {
 //اگر start فراخوانی شود، وضعیت درخواست ها و کاربر ها مثل قبل میشود و عملیات کنسل می شود
 if ($all_units) {
     if ($Text_orgi == "/start") {
-        delete_undone_request($conn, $bb);
-        delete_get_num($conn, $bb);
-        stop_reason_message($conn, $bb);
+        reset_unit($conn, $bb);
         accounting_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
@@ -1166,10 +1601,13 @@ switch ($callback_data) {
 //  درخواست های من
     case "myreq":
         if ($all_units or in_array($chat_id, $project_managers) or $chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
+            if ($all_units){
+                reset_unit($conn, $bb);
+            }elseif(in_array($chat_id, $project_managers)){
+                delete_undone_request($conn, $bb);
+            }elseif ($chat_id == $admin){
+                reset_admin($conn, $bb);
+            }
             my_req($conn, $bot, $chat_id, $bb);
             if (in_array($chat_id, $project_managers)) {
                 projectmanager_clipboard($bot, $chat_id);
@@ -1356,8 +1794,7 @@ switch ($callback_data) {
 //درخواست پرداخت برای حسابداری
     case "newreqacc":
         if ($all_units) {
-            delete_get_num($conn, $bb);
-            delete_undone_request($conn, $bb);
+            reset_unit($conn, $bb);
             create_new_req($conn, $bot, $bb, $chat_id);
         }
         break;
@@ -1365,9 +1802,7 @@ switch ($callback_data) {
     //نمایش درخواست های بررسی نشده
     case "openreqacc":
         if ($all_units) {
-            delete_undone_request($conn, $bb);
-            stop_reason_message($conn, $bb);
-            delete_get_num($conn, $bb);
+            reset_unit($conn, $bb);
 
             $q_exists = "SELECT * FROM Requests WHERE req_status=1 AND is_closed=2 AND unit='$position' ORDER BY register_date DESC, register_time DESC LIMIT 30";
 
@@ -1414,9 +1849,7 @@ switch ($callback_data) {
     //نمایش درخواست های تأیید شده
     case "confirmed_requests":
         if ($all_units) {
-            delete_undone_request($conn, $bb);
-            stop_reason_message($conn, $bb);
-            delete_get_num($conn, $bb);
+            reset_unit($conn, $bb);
 
             $q_exists = "SELECT * FROM Requests WHERE req_status=3 AND is_closed=3 AND unit='$position' ORDER BY register_date DESC, register_time DESC LIMIT 30";
 
@@ -1441,7 +1874,7 @@ switch ($callback_data) {
                         $accept_date = $row['accept_date'];
                         $accept_time = $row['accept_time'];
 
-                        $predict_date = $row['predect_date'];
+                        $predict_date = $row['predict_date'];
 
                         $description = $row['description'];
                         $created_by = $row['created_by'];
@@ -1486,11 +1919,7 @@ switch ($callback_data) {
 //مدیریت حساب ها(تنظیمات)
     case "setting":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
-            delete_get_num($conn, $bb);
+            reset_admin($conn, $bb);
 
             $inlineKeyboardoption = [
                 $bot->buildInlineKeyBoardButton("افزودن سمت", '', "newpost"),
@@ -1505,11 +1934,8 @@ switch ($callback_data) {
 //افزودن یک شخص جدید به ربات
     case "newpost":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
-            delete_get_num($conn, $bb);
+            reset_admin($conn, $bb);
+
             $contenttmp = array('chat_id' => $chat_id, "text" => "نام کامل شخص مورد نظر را وارد کنید");
             $bot->sendText($contenttmp);
             $qu = "INSERT INTO Persons (status) VALUES ('getname')";
@@ -1519,10 +1945,8 @@ switch ($callback_data) {
 //تغییر سمت شخص مورد نظر
     case "changepost":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
+            reset_admin($conn, $bb);
+
             $qu = "INSERT INTO Persons (status) VALUES ('change')";
             $result = $conn->query($qu);
             $contenttmp = array('chat_id' => $chat_id, "text" => "یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
@@ -1532,10 +1956,8 @@ switch ($callback_data) {
 //تغییر یوزرنیم یک شخص
     case "changeusername":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
+            reset_admin($conn, $bb);
+
             $qu = "INSERT INTO Persons (status) VALUES ('changeus')";
             $result = $conn->query($qu);
             $contenttmp = array('chat_id' => $chat_id, "text" => "یوزرنیم قبلی شخص مورد نظر را بدون علامت @ وارد کنید:");
@@ -1861,10 +2283,8 @@ switch ($callback_data) {
 //لیست کاربران
     case "admin_users_list":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
+            reset_admin($conn, $bb);
+
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             sleep(1);
             $bot->sendText($contenttmp);
@@ -1876,12 +2296,86 @@ switch ($callback_data) {
 //        درخواست جدید برای ادمین
     case "admin_new_req":
         if ($chat_id == $admin) {
-            delete_undone_request($conn, $bb);
-            delete_half_made_user($conn);
-            stop_changing($conn);
-            stop_reason_message($conn, $bb);
-            delete_get_num($conn, $bb);
+            reset_admin($conn, $bb);
+
             create_new_req($conn, $bot, $bb, $chat_id);
+        }
+        break;
+    //        خروجی گرفتن اکسل از گزارشات
+    case "adminexcel":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $inlineKeyboardoption = [
+                $bot->buildInlineKeyBoardButton("درخواست های انجام شده", '', "adminexceldone"),
+                $bot->buildInlineKeyBoardButton("درخواست های تأیید شده", '', "adminexcelaccept"),
+                $bot->buildInlineKeyBoardButton("درخواست های رد شده", '', "adminexcelreject"),
+                $bot->buildInlineKeyBoardButton("درخواست های بررسی نشده", '', "adminexcelopen"),
+                $bot->buildInlineKeyBoardButton("تمام درخواست ها", '', "adminexcelall"),
+            ];
+            $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "گزارش مورد نظر خود را انتخاب کنید(1000 مورد آخر خروجی گرفته میشود):", 'reply_markup' => $Keyboard);
+            $bot->sendText($contenttmp);
+        }
+        break;
+//اکسل از درخواست های بررسی نشده
+    case "adminexcelopen":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_open($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+//اکسل از درخواست های انجام شده
+    case "adminexceldone":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_done($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+//اکسل از همه درخواست ها
+    case "adminexcelall":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_all($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+//        درخواست های تأیید شده
+    case "adminexcelaccept":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_accept($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
+        }
+        break;
+    //        درخواست های رد شده
+    case "adminexcelreject":
+        if ($chat_id == $admin) {
+            reset_admin($conn, $bb);
+
+            $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
+            $bot->sendText($contenttmp);
+            export_excel_reject($conn, $bot, $chat_id);
+
+            admin_clipboard($bot, $chat_id);
         }
         break;
 }
