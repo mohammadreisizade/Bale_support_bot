@@ -69,6 +69,7 @@ foreach ($data as $u) {
 
                 $predict_date = $row['predict_date'];
                 $name = $row['name'];
+                $requestor_unit = $row['requestor_unit'];
 
                 $uni = "مالی";
 
@@ -79,7 +80,7 @@ foreach ($data as $u) {
                     [$bot->buildInlineKeyBoardButton("انجام شده", '', "$cbdatadone")],
                 ];
                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                $content = array("chat_id" => $u, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $uni\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time", 'reply_markup' => $Keyboard);
+                $content = array("chat_id" => $u, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد درخواست دهنده : $requestor_unit\nواحد خدمات دهنده : $uni\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time", 'reply_markup' => $Keyboard);
                 $bot->sendText($content);
 
                 sleep(2);

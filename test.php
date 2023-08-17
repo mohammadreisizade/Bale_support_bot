@@ -209,7 +209,7 @@ function create_new_req($conn, $bot, $bb, $chat_id)
         $bot->buildInlineKeyBoardButton("مالی", '', "choose_financial")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-    $contenttmp = array('chat_id' => $chat_id, "text" => "لطفا واحد درخواست دهنده را از گزینه های زیر انتخاب کنید.", 'reply_markup' => $Keyboard);
+    $contenttmp = array('chat_id' => $chat_id, "text" => "لطفا واحد خدمات دهنده را از گزینه های زیر انتخاب کنید.", 'reply_markup' => $Keyboard);
     $bot->sendText($contenttmp);
 }
 
@@ -222,7 +222,18 @@ function req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi)
             $row = $result->fetch_assoc();
             $ccc = $row['req_status'];
 
-            if ($ccc == 4) {
+            if ($ccc == 10) {
+                if (strlen($Text_orgi) >= 200) {
+                    $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
+                    $bot->sendText($contenttmp);
+                } else {
+                    $q_up = "UPDATE Requests SET requestor_unit='$Text_orgi', req_status=4 WHERE created_by=$bb AND req_status=10";
+                    $conn->query($q_up);
+                    $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
+                    $bot->sendText($content);
+                }
+
+            } elseif ($ccc == 4) {
                 if (strlen($Text_orgi) >= 200) {
                     $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
                     $bot->sendText($contenttmp);
@@ -257,8 +268,9 @@ function req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi)
                         }
                         $t = $row['title'];
                         $d = $row['description'];
+                        $requestor_unit = $row['requestor_unit'];
 
-                        $content = array("chat_id" => $chat_id, "text" => "واحد مورد درخواست : $u\nعنوان : $t\nتوضیحات : $d");
+                        $content = array("chat_id" => $chat_id, "text" => "واحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $t\nتوضیحات : $d");
                         $bot->sendText($content);
 
                         $q_up = "UPDATE Requests SET req_status=6 WHERE created_by=$bb AND is_closed=1";
@@ -317,6 +329,7 @@ function my_req($conn, $bot, $chat_id, $bb)
                         $done_time = $row['done_time'];
 
                         $predict_date = $row['predict_date'];
+                        $requestor_unit = $row['requestor_unit'];
 
                         $unit = $row['unit'];
                         if ($unit == 2) {
@@ -357,7 +370,7 @@ function my_req($conn, $bot, $chat_id, $bb)
                                 [$bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate")],
                             ];
                             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                            $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r", 'reply_markup' => $Keyboard);
+                            $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r", 'reply_markup' => $Keyboard);
                             $bot->sendText($content);
                         }
                     } else {
@@ -378,6 +391,7 @@ function my_req($conn, $bot, $chat_id, $bb)
 
                     $accept_date = $row['accept_date'];
                     $accept_time = $row['accept_time'];
+                    $requestor_unit = $row['requestor_unit'];
 
                     $unit = $row['unit'];
                     if ($unit == 2) {
@@ -404,13 +418,13 @@ function my_req($conn, $bot, $chat_id, $bb)
                     }
 
                     if ($state == 2) {
-                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
+                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
                         $bot->sendText($content);
                     } elseif ($state == 1) {
-                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
+                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
                         $bot->sendText($content);
                     } elseif ($state == 3) {
-                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\n ساعت تأیید درخواست : $accept_time");
+                        $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\n ساعت تأیید درخواست : $accept_time");
                         $bot->sendText($content);
                     }
                 }
@@ -461,6 +475,7 @@ function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
                             $done_time = $row['done_time'];
 
                             $predict_date = $row['predict_date'];
+                            $requestor_unit = $row['requestor_unit'];
 
                             $name = $row['name'];
 
@@ -504,17 +519,18 @@ function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
                             } else {
                                 $status = "نامشخص";
                             }
+
                             if ($state == 2) {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
+                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nدلیل رد شدن درخواست : $reason\nتاریخ رد شدن درخواست : $date_reject\nساعت رد شدن درخواست : $time_reject");
                                 $bot->sendText($content);
                             } elseif ($state == 1) {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
+                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time");
                                 $bot->sendText($content);
                             } elseif ($state == 3) {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $date_accept\nساعت تأیید درخواست : $time_accept");
+                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $date_accept\nساعت تأیید درخواست : $time_accept");
                                 $bot->sendText($content);
                             } elseif ($state == 9) {
-                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $u\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $date_accept\nساعت تأیید درخواست : $time_accept\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r");
+                                $content = array("chat_id" => $chat_id, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد خدمات دهنده : $u\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $date_accept\nساعت تأیید درخواست : $time_accept\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r");
                                 $bot->sendText($content);
                             }
                             sleep(2);
@@ -547,19 +563,20 @@ function export_excel_all($conn, $bot, $chat_id)
         $sheet->setCellValue('A1', 'نام');
         $sheet->setCellValue('B1', 'عنوان');
         $sheet->setCellValue('C1', 'توضیحات');
-        $sheet->setCellValue('D1', 'واحد مربوط');
-        $sheet->setCellValue('E1', 'وضعیت');
-        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
-        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
-        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
-        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
-        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
-        $sheet->setCellValue('K1', 'تاریخ تغییر وضعیت به انجام شده');
-        $sheet->setCellValue('L1', 'ساعت تغییر وضعیت به انجام شده');
-        $sheet->setCellValue('M1', 'میزان رضایت');
-        $sheet->setCellValue('N1', 'دلیل رد درخواست');
-        $sheet->setCellValue('O1', 'تاریخ رد درخواست');
-        $sheet->setCellValue('P1', 'ساعت رد درخواست');
+        $sheet->setCellValue('D1', 'واحد خدمات دهنده');
+        $sheet->setCellValue('E1', 'واحد درخواست دهنده');
+        $sheet->setCellValue('F1', 'وضعیت');
+        $sheet->setCellValue('G1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('H1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('I1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('J1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('K1', 'زمان پیشبینی انجام درخواست');
+        $sheet->setCellValue('L1', 'تاریخ تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('M1', 'ساعت تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('N1', 'میزان رضایت');
+        $sheet->setCellValue('O1', 'دلیل رد درخواست');
+        $sheet->setCellValue('P1', 'تاریخ رد درخواست');
+        $sheet->setCellValue('Q1', 'ساعت رد درخواست');
         $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
         while ($row = $result->fetch_assoc()) {
 
@@ -606,23 +623,25 @@ function export_excel_all($conn, $bot, $chat_id)
             $name = $row['name'];
             $title = $row['title'];
             $description = $row['description'];
+            $requestor_unit = $row['requestor_unit'];
 
             $sheet->setCellValue('A' . $rowNumber, $name);
             $sheet->setCellValue('B' . $rowNumber, $title);
             $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
             $sheet->setCellValue('D' . $rowNumber, $uni);
-            $sheet->setCellValue('E' . $rowNumber, $req_status);
-            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
-            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
-            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
-            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
-            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
-            $sheet->setCellValue('K' . $rowNumber, $row['done_date'] ?? "---");
-            $sheet->setCellValue('L' . $rowNumber, $row['done_time'] ?? "---");
-            $sheet->setCellValue('M' . $rowNumber, $r);
-            $sheet->setCellValue('N' . $rowNumber, $row['reason'] ?? "---");
-            $sheet->setCellValue('O' . $rowNumber, $row['reject_date'] ?? "---");
-            $sheet->setCellValue('P' . $rowNumber, $row['reject_time'] ?? "---");
+            $sheet->setCellValue('E' . $rowNumber, $requestor_unit);
+            $sheet->setCellValue('F' . $rowNumber, $req_status);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('H' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['predict_date'] ?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['done_date'] ?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $row['done_time'] ?? "---");
+            $sheet->setCellValue('N' . $rowNumber, $r);
+            $sheet->setCellValue('O' . $rowNumber, $row['reason'] ?? "---");
+            $sheet->setCellValue('P' . $rowNumber, $row['reject_date'] ?? "---");
+            $sheet->setCellValue('Q' . $rowNumber, $row['reject_time'] ?? "---");
             $rowNumber++;
         }
         $objPHPExcel->getActiveSheet()->setTitle('Simple');
@@ -655,13 +674,14 @@ function export_excel_reject($conn, $bot, $chat_id)
         $sheet->setCellValue('A1', 'نام');
         $sheet->setCellValue('B1', 'عنوان');
         $sheet->setCellValue('C1', 'توضیحات');
-        $sheet->setCellValue('D1', 'واحد مربوط');
-        $sheet->setCellValue('E1', 'وضعیت');
-        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
-        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
-        $sheet->setCellValue('H1', 'دلیل رد درخواست');
-        $sheet->setCellValue('I1', 'تاریخ رد درخواست');
-        $sheet->setCellValue('J1', 'ساعت رد درخواست');
+        $sheet->setCellValue('D1', 'واحد خدمات دهنده');
+        $sheet->setCellValue('E1', 'واحد درخواست دهنده');
+        $sheet->setCellValue('F1', 'وضعیت');
+        $sheet->setCellValue('G1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('H1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('I1', 'دلیل رد درخواست');
+        $sheet->setCellValue('J1', 'تاریخ رد درخواست');
+        $sheet->setCellValue('K1', 'ساعت رد درخواست');
         $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
         while ($row = $result->fetch_assoc()) {
 
@@ -683,17 +703,19 @@ function export_excel_reject($conn, $bot, $chat_id)
             $name = $row['name'];
             $title = $row['title'];
             $description = $row['description'];
+            $requestor_unit = $row['requestor_unit'];
 
             $sheet->setCellValue('A' . $rowNumber, $name);
             $sheet->setCellValue('B' . $rowNumber, $title);
             $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
             $sheet->setCellValue('D' . $rowNumber, $uni);
-            $sheet->setCellValue('E' . $rowNumber, $req_status);
-            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
-            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
-            $sheet->setCellValue('H' . $rowNumber, $row['reason'] ?? "---");
-            $sheet->setCellValue('I' . $rowNumber, $row['reject_date'] ?? "---");
-            $sheet->setCellValue('J' . $rowNumber, $row['reject_time'] ?? "---");
+            $sheet->setCellValue('E' . $rowNumber, $requestor_unit);
+            $sheet->setCellValue('F' . $rowNumber, $req_status);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('H' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('I' . $rowNumber, $row['reason'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['reject_date'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['reject_time'] ?? "---");
             $rowNumber++;
         }
         $objPHPExcel->getActiveSheet()->setTitle('Simple');
@@ -727,13 +749,14 @@ function export_excel_accept($conn, $bot, $chat_id)
         $sheet->setCellValue('A1', 'نام');
         $sheet->setCellValue('B1', 'عنوان');
         $sheet->setCellValue('C1', 'توضیحات');
-        $sheet->setCellValue('D1', 'واحد مربوط');
-        $sheet->setCellValue('E1', 'وضعیت');
-        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
-        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
-        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
-        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
-        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
+        $sheet->setCellValue('D1', 'واحد خدمات دهنده');
+        $sheet->setCellValue('E1', 'واحد درخواست دهنده');
+        $sheet->setCellValue('F1', 'وضعیت');
+        $sheet->setCellValue('G1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('H1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('I1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('J1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('K1', 'زمان پیشبینی انجام درخواست');
 
         $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
         while ($row = $result->fetch_assoc()) {
@@ -756,17 +779,19 @@ function export_excel_accept($conn, $bot, $chat_id)
             $name = $row['name'];
             $title = $row['title'];
             $description = $row['description'];
+            $requestor_unit = $row['requestor_unit'];
 
             $sheet->setCellValue('A' . $rowNumber, $name);
             $sheet->setCellValue('B' . $rowNumber, $title);
             $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
             $sheet->setCellValue('D' . $rowNumber, $uni);
-            $sheet->setCellValue('E' . $rowNumber, $req_status);
-            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
-            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
-            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
-            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
-            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
+            $sheet->setCellValue('E' . $rowNumber, $requestor_unit);
+            $sheet->setCellValue('F' . $rowNumber, $req_status);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('H' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['predict_date'] ?? "---");
 
             $rowNumber++;
         }
@@ -803,10 +828,11 @@ function export_excel_open($conn, $bot, $chat_id)
         $sheet->setCellValue('A1', 'نام');
         $sheet->setCellValue('B1', 'عنوان');
         $sheet->setCellValue('C1', 'توضیحات');
-        $sheet->setCellValue('D1', 'واحد مربوط');
-        $sheet->setCellValue('E1', 'وضعیت');
-        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
-        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('D1', 'واحد خدمات دهنده');
+        $sheet->setCellValue('E1', 'واحد درخواست دهنده');
+        $sheet->setCellValue('F1', 'وضعیت');
+        $sheet->setCellValue('G1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('H1', 'ساعت ثبت درخواست');
 
         $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
         while ($row = $result->fetch_assoc()) {
@@ -816,6 +842,7 @@ function export_excel_open($conn, $bot, $chat_id)
             $name = $row['name'];
             $title = $row['title'];
             $description = $row['description'];
+            $requestor_unit = $row['requestor_unit'];
 
             $unit = $row['unit'];
             if ($unit == 2) {
@@ -834,9 +861,10 @@ function export_excel_open($conn, $bot, $chat_id)
             $sheet->setCellValue('B' . $rowNumber, $title);
             $sheet->setCellValue('C' . $rowNumber, $description);
             $sheet->setCellValue('D' . $rowNumber, $uni);
-            $sheet->setCellValue('E' . $rowNumber, $req_status);
-            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
-            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('E' . $rowNumber, $requestor_unit);
+            $sheet->setCellValue('F' . $rowNumber, $req_status);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('H' . $rowNumber, $row['register_time']);
 
             $rowNumber++;
         }
@@ -874,16 +902,17 @@ function export_excel_done($conn, $bot, $chat_id)
         $sheet->setCellValue('A1', 'نام');
         $sheet->setCellValue('B1', 'عنوان');
         $sheet->setCellValue('C1', 'توضیحات');
-        $sheet->setCellValue('D1', 'واحد مربوط');
-        $sheet->setCellValue('E1', 'وضعیت');
-        $sheet->setCellValue('F1', 'تاریخ ثبت درخواست');
-        $sheet->setCellValue('G1', 'ساعت ثبت درخواست');
-        $sheet->setCellValue('H1', 'تاریخ تأیید درخواست');
-        $sheet->setCellValue('I1', 'ساعت تأیید درخواست');
-        $sheet->setCellValue('J1', 'زمان پیشبینی انجام درخواست');
-        $sheet->setCellValue('K1', 'تاریخ تغییر وضعیت به انجام شده');
-        $sheet->setCellValue('L1', 'ساعت تغییر وضعیت به انجام شده');
-        $sheet->setCellValue('M1', 'میزان رضایت');
+        $sheet->setCellValue('D1', 'واحد خدمات دهنده');
+        $sheet->setCellValue('E1', 'واحد درخواست دهنده');
+        $sheet->setCellValue('F1', 'وضعیت');
+        $sheet->setCellValue('G1', 'تاریخ ثبت درخواست');
+        $sheet->setCellValue('H1', 'ساعت ثبت درخواست');
+        $sheet->setCellValue('I1', 'تاریخ تأیید درخواست');
+        $sheet->setCellValue('J1', 'ساعت تأیید درخواست');
+        $sheet->setCellValue('K1', 'زمان پیشبینی انجام درخواست');
+        $sheet->setCellValue('L1', 'تاریخ تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('M1', 'ساعت تغییر وضعیت به انجام شده');
+        $sheet->setCellValue('N1', 'میزان رضایت');
 
         $rowNumber = 2; // از ردیف دوم شروع می‌کنیم (بعد از عنوان‌ها)
         while ($row = $result->fetch_assoc()) {
@@ -921,20 +950,22 @@ function export_excel_done($conn, $bot, $chat_id)
             $name = $row['name'];
             $title = $row['title'];
             $description = $row['description'];
+            $requestor_unit = $row['requestor_unit'];
 
             $sheet->setCellValue('A' . $rowNumber, $name);
             $sheet->setCellValue('B' . $rowNumber, $title);
             $sheet->setCellValue('C' . $rowNumber, $description ?? "---");
             $sheet->setCellValue('D' . $rowNumber, $uni);
-            $sheet->setCellValue('E' . $rowNumber, $req_status);
-            $sheet->setCellValue('F' . $rowNumber, $row['register_date']);
-            $sheet->setCellValue('G' . $rowNumber, $row['register_time']);
-            $sheet->setCellValue('H' . $rowNumber, $row['accept_date'] ?? "---");
-            $sheet->setCellValue('I' . $rowNumber, $row['accept_time'] ?? "---");
-            $sheet->setCellValue('J' . $rowNumber, $row['predict_date'] ?? "---");
-            $sheet->setCellValue('K' . $rowNumber, $row['done_date'] ?? "---");
-            $sheet->setCellValue('L' . $rowNumber, $row['done_time'] ?? "---");
-            $sheet->setCellValue('M' . $rowNumber, $r);
+            $sheet->setCellValue('E' . $rowNumber, $requestor_unit);
+            $sheet->setCellValue('F' . $rowNumber, $req_status);
+            $sheet->setCellValue('G' . $rowNumber, $row['register_date']);
+            $sheet->setCellValue('H' . $rowNumber, $row['register_time']);
+            $sheet->setCellValue('I' . $rowNumber, $row['accept_date'] ?? "---");
+            $sheet->setCellValue('J' . $rowNumber, $row['accept_time'] ?? "---");
+            $sheet->setCellValue('K' . $rowNumber, $row['predict_date'] ?? "---");
+            $sheet->setCellValue('L' . $rowNumber, $row['done_date'] ?? "---");
+            $sheet->setCellValue('M' . $rowNumber, $row['done_time'] ?? "---");
+            $sheet->setCellValue('N' . $rowNumber, $r);
 
             $rowNumber++;
         }
@@ -1007,6 +1038,7 @@ $time_now = date('H:i:s');
 //   7   دریافت واحد
 //   8   دریافت شماره برای تعداد درخواست هایی که میخواهیم نمایش داده شود
 //   9   انجام شده
+//   10   حالت دریافت واحد درخواست دهنده
 
 //---------------------------------------------------- حالت های status -----------------------------------------------------------
 
@@ -1266,7 +1298,7 @@ if ($all_units) {
                     $q_up = "UPDATE Requests SET req_status=3, is_closed=3, predict_date='$Text_orgi', accept_date='$today_date', accept_time='$time_now' WHERE id='$ccc'";
                     $result = $conn->query($q_up);
 
-                    $content = array("chat_id" => $chat_id, "text" => "درخواست : $title تأیید شد.");
+                    $content = array("chat_id" => $chat_id, "text" => "درخواست : ** $title ** تأیید شد.");
                     $bot->sendText($content);
                 }
             }
@@ -1341,12 +1373,14 @@ if ($callback_data[0] == "x") {
         $done_date = $row['done_date'];
         $done_time = $row['done_time'];
 
+        $requestor_unit = $row['requestor_unit'];
+
         $cbdatasubmitrate = "j$id";
         $inlineKeyboardoption = [
             [$bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate")],
         ];
         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-        $content = array("chat_id" => $requestor, "text" => "درخواست شما با مشخصات زیر توسط واحد $u انجام شد:\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time", 'reply_markup' => $Keyboard);
+        $content = array("chat_id" => $requestor, "text" => "درخواست شما با مشخصات زیر توسط واحد $u انجام شد:\nعنوان : $title \nواحد درخواست دهنده : $requestor_unit\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time", 'reply_markup' => $Keyboard);
         $bot->sendText($content);
     }
 
@@ -1642,10 +1676,11 @@ switch ($callback_data) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
-            $q_up = "UPDATE Requests SET unit=2, req_status=4 WHERE created_by=$bb AND req_status=7";
+            $q_up = "UPDATE Requests SET unit=2, req_status=10 WHERE created_by=$bb AND req_status=7";
             $result = $conn->query($q_up);
 
-            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
+            $content = array("chat_id" => $chat_id, "text" => "لطفا واحد درخواست دهنده را وارد کنید:");
+//            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
             $bot->sendText($content);
         }
         break;
@@ -1656,10 +1691,10 @@ switch ($callback_data) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
-            $q_up = "UPDATE Requests SET unit=5, req_status=4 WHERE created_by=$bb AND req_status=7";
+            $q_up = "UPDATE Requests SET unit=5, req_status=10 WHERE created_by=$bb AND req_status=7";
             $result = $conn->query($q_up);
 
-            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
+            $content = array("chat_id" => $chat_id, "text" => "لطفا واحد درخواست دهنده را وارد کنید:");
             $bot->sendText($content);
         }
         break;
@@ -1670,10 +1705,10 @@ switch ($callback_data) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
-            $q_up = "UPDATE Requests SET unit=4, req_status=4 WHERE created_by=$bb AND req_status=7";
+            $q_up = "UPDATE Requests SET unit=4, req_status=10 WHERE created_by=$bb AND req_status=7";
             $result = $conn->query($q_up);
 
-            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
+            $content = array("chat_id" => $chat_id, "text" => "لطفا واحد درخواست دهنده را وارد کنید:");
             $bot->sendText($content);
         }
         break;
@@ -1684,10 +1719,10 @@ switch ($callback_data) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
-            $q_up = "UPDATE Requests SET unit=3, req_status=4 WHERE created_by=$bb AND req_status=7";
+            $q_up = "UPDATE Requests SET unit=3, req_status=10 WHERE created_by=$bb AND req_status=7";
             $result = $conn->query($q_up);
 
-            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
+            $content = array("chat_id" => $chat_id, "text" => "لطفا واحد درخواست دهنده را وارد کنید:");
             $bot->sendText($content);
         }
         break;
@@ -1737,6 +1772,7 @@ switch ($callback_data) {
                                 $description = $row['description'];
                                 $created_by = $row['created_by'];
                                 $name = $row['name'];
+                                $requestor_unit = $row['requestor_unit'];
                                 $id = $row['id'];
                                 $cbdataaccept = "x$id";
                                 $rejectreq = "r$id";
@@ -1745,7 +1781,7 @@ switch ($callback_data) {
                                     $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept")],
                                 ];
                                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                                $content = array("chat_id" => $u, "text" => "درخواست جدید:\nنام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time", 'reply_markup' => $Keyboard);
+                                $content = array("chat_id" => $u, "text" => "درخواست جدید:\nنام : $name\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time", 'reply_markup' => $Keyboard);
                                 $bot->sendText($content);
                             }
                             sleep(1);
@@ -1842,6 +1878,7 @@ switch ($callback_data) {
                         $created_by = $row['created_by'];
                         $name = $row['name'];
                         $id = $row['id'];
+                        $requestor_unit = $row['requestor_unit'];
 
                         $cbdataaccept = "x$id";
                         $rejectreq = "r$id";
@@ -1851,7 +1888,7 @@ switch ($callback_data) {
                             $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept")],
                         ];
                         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                        $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ درخواست : $date\nساعت درخواست : $time", 'reply_markup' => $Keyboard);
+                        $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title\nواحد درخواست دهنده : $requestor_unit \nتوضیحات : $description\nتاریخ درخواست : $date\nساعت درخواست : $time", 'reply_markup' => $Keyboard);
                         $bot->sendText($content);
                         sleep(1);
                     }
@@ -1897,6 +1934,7 @@ switch ($callback_data) {
 
                         $name = $row['name'];
                         $id = $row['id'];
+                        $requestor_unit = $row['requestor_unit'];
 
                         $cbdatadone = "d$id";
 
@@ -1904,7 +1942,7 @@ switch ($callback_data) {
                             [$bot->buildInlineKeyBoardButton("انجام شده", '', "$cbdatadone")],
                         ];
                         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                        $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time", 'reply_markup' => $Keyboard);
+                        $content = array("chat_id" => $chat_id, "text" => "نام : $name\nعنوان : $title\nواحد درخواست دهنده : $requestor_unit \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time", 'reply_markup' => $Keyboard);
                         $bot->sendText($content);
                         sleep(1);
                     }

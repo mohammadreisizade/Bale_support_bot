@@ -90,6 +90,7 @@ foreach ($data as $u) {
 
                     $predict_date = $row['predict_date'];
                     $name = $row['name'];
+                    $requestor_unit = $row['requestor_unit'];
 
                     $unit = $row['unit'];
                     if ($unit == 2) {
@@ -121,7 +122,7 @@ foreach ($data as $u) {
 
                     $status = "انجام شده";
 
-                    $content = array("chat_id" => $u, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد مربوط : $uni\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r");
+                    $content = array("chat_id" => $u, "text" => "وضعیت : $status\nنام درخواست دهنده : $name\nواحد درخواست دهنده : $requestor_unit\nواحد خدمات دهنده : $uni\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\n ساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time\nمیزان رضایت : $r");
                     $bot->sendText($content);
 
                 } else {

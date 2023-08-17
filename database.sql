@@ -13,6 +13,7 @@ CREATE TABLE Requests (
     unit SMALLINT,
     created_by BIGINT,
     title VARCHAR(200),
+    requestor_unit VARCHAR(200),
     description VARCHAR(300),
     req_status SMALLINT,
     is_closed SMALLINT,
