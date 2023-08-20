@@ -13,17 +13,17 @@ require_once 'Classes/PHPExcel.php';
 // کنسل کردن تغییر سمت
 function stop_changing($conn)
 {
-    $sql = "SELECT * FROM Persons WHERE status='changing'";
+    $sql = "SELECT * FROM Persons WHERE status='changing' OR status='whatadd'";
     if ($result = $conn->query($sql)) {
         if ($result->num_rows != 0) {
-            $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
+            $q_up = "UPDATE Persons SET status=NULL WHERE status='changing' OR status='whatadd'";
             $conn->query($q_up);
         }
     }
-    $sql = "SELECT * FROM Persons WHERE status='change'";
+    $sql = "SELECT * FROM Persons WHERE status='change' OR status='getusadd'";
     if ($result = $conn->query($sql)) {
         if ($result->num_rows != 0) {
-            $q_up = "DELETE FROM Persons WHERE status='change'";
+            $q_up = "DELETE FROM Persons WHERE status='change' OR status='getusadd'";
             $conn->query($q_up);
         }
     }
@@ -98,7 +98,17 @@ function accounting_clipboard($bot, $chat_id)
         [$bot->buildInlineKeyBoardButton("همه درخواست های مربوط به من", '', "everything")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-    $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
+    $contenttmp = array('chat_id' => $chat_id, "text" => "صفحه کلید مسئولان واحد ها\n یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
+    $bot->sendText($contenttmp);
+}
+
+function ceo_clipboard($bot, $chat_id)
+{
+    $inlineKeyboardoption = [
+        [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
+    ];
+    $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
+    $contenttmp = array('chat_id' => $chat_id, "text" => "صفحه کلید مدیر عامل \nیکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
     $bot->sendText($contenttmp);
 }
 
@@ -109,7 +119,7 @@ function projectmanager_clipboard($bot, $chat_id)
         [$bot->buildInlineKeyBoardButton("درخواست های من", '', "myreq")],
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-    $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
+    $contenttmp = array('chat_id' => $chat_id, "text" => "صفحه کلید مدیر واحد \nیکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
     $bot->sendText($contenttmp);
 }
 
@@ -125,7 +135,7 @@ function admin_clipboard($bot, $chat_id)
 
     ];
     $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-    $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
+    $contenttmp = array('chat_id' => $chat_id, "text" => "صفحه کلید ادمین\nیکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
 
 //    $inlineKeyboardoption = [
 //        [['text' => 'تنظیمات', 'callback_data' => 'setting']],
@@ -156,27 +166,35 @@ function users_list($conn, $bot, $chat_id)
             $name = $row['name'];
             $username = $row['username'];
             $position = $row['position'];
-            if ($position == 1) {
-                $position = "ادمین";
-            } elseif ($position == 2) {
-                $position = "انفورماتیک";
-            } elseif ($position == 3) {
-                $position = "مالی";
-            } elseif ($position == 4) {
-                $position = "پشتیبانی";
-            } elseif ($position == 5) {
-                $position = "خدمات";
-            } elseif ($position == 6) {
-                $position = "مدیر عامل";
-            } elseif ($position == 7) {
-                $position = "مدیر واحد";
+            $p = explode("|", $position);
+            $po = "";
+            if (in_array('1', $p)) {
+                $po .= "\n" . "ادمین";
             }
-            $text .= "نام: $name \n یوزرنیم:\n @$username \n سمت: $position \n**********\n";
+            if (in_array('2', $p)) {
+                $po .= "\n" . "انفورماتیک";
+            }
+            if (in_array('3', $p)) {
+                $po .= "\n" . "مالی";
+            }
+            if (in_array('4', $p)) {
+                $po .= "\n" . "پشتیبانی";
+            }
+            if (in_array('5', $p)) {
+                $po .= "\n" . "خدمات";
+            }
+            if (in_array('6', $p)) {
+                $po .= "\n" . "مدیر عامل";
+            }
+            if (in_array('7', $p)) {
+                $po .= "\n" . "مدیر واحد";
+            }
+            $text .= "نام: $name \n یوزرنیم:\n @$username \n سمت: $po \n**********\n";
         }
         return $text;
     }
 
-    $batchSize = 4;
+    $batchSize = 3;
     $count = 0;
     $rows = array();
 
@@ -195,6 +213,10 @@ function users_list($conn, $bot, $chat_id)
         $content = array("chat_id" => $chat_id, "text" => convertToText($rows));
         $bot->sendText($content);
     }
+    sleep(1);
+
+    $contenttmp = array('chat_id' => $chat_id, "text" => "پایان پردازش");
+    $bot->sendText($contenttmp);
 }
 
 function create_new_req($conn, $bot, $bb, $chat_id)
@@ -430,11 +452,13 @@ function my_req($conn, $bot, $chat_id, $bb)
                 }
                 sleep(2);
             }
+            $contenttmp = array('chat_id' => $chat_id, "text" => "پایان پردازش");
+            $bot->sendText($contenttmp);
         }
     }
 }
 
-function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
+function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $pos_array, $roll)
 {
     $sql = "SELECT * FROM Requests WHERE req_status=8 AND created_by=$bb";
     if ($result = $conn->query($sql)) {
@@ -443,10 +467,10 @@ function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
 
             if (is_numeric($thenum)) {
                 settype($thenum, "integer");
-                if ($position == 1) {
+                if (in_array(1, $pos_array)) {
                     $q_exists = "SELECT * FROM Requests WHERE is_closed=2 OR is_closed=3 OR is_closed=4 ORDER BY register_date DESC, register_time DESC LIMIT $thenum";
                 } else {
-                    $q_exists = "SELECT * FROM Requests WHERE (is_closed=2 OR is_closed=3 OR is_closed=4) AND unit='$position' ORDER BY register_date DESC, register_time DESC LIMIT $thenum";
+                    $q_exists = "SELECT * FROM Requests WHERE (is_closed=2 OR is_closed=3 OR is_closed=4) AND (unit IN ($roll)) ORDER BY register_date DESC, register_time DESC LIMIT $thenum";
                 }
                 if ($result = $conn->query($q_exists)) {
                     if ($result->num_rows == 0) {
@@ -454,7 +478,7 @@ function manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position)
                         $bot->sendText($contenttmp);
                     } else {
                         $max_rows = $result->num_rows;
-                        $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد انتخاب شده: $thenum\nحداکثر درخواست های موجود: $max_rows");
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد انتخاب شده: $thenum\nتعداد درخواست های درحال پردازش: $max_rows");
                         $bot->sendText($contenttmp);
                         while ($row = $result->fetch_assoc()) {
 
@@ -1050,8 +1074,11 @@ $time_now = date('H:i:s');
 //getuser دریافت یوزرنیم برای ساخت حساب کاربری
 //getpos وضعیت درخواست پرداخت شده
 //choosing تأیید ساخت یک حساب کاربری جدید برای بات
+//getusadd اد کردن یک دسترسی جدید به کاربر
+//whatadd مرحله اخر اد کردن
 
 //---------------------------------------------------- حالت های is_closed -----------------------------------------------------------
+
 // 1 درخواست در حال ساخته شدن است.
 // 2   درخواست ثبت شده و منتظر تأیید است.
 // 3 درخواست تأیید شده است.
@@ -1064,6 +1091,7 @@ $time_now = date('H:i:s');
 // 3 رضایت نسبی
 // 4 رضایت متوسط
 // 5 رضایت کامل
+
 //---------------------------------------------------- حالت های دسترسی -----------------------------------------------------------
 // 1 ادمین
 // 2 انفورماتیک
@@ -1092,8 +1120,8 @@ mysqli_set_charset($conn, "utf8mb4");
 // ------------------------------------------------------UPDATE UNIQUE ID INSTEAD OF USERNAME----------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 // دریافت همه یوزر نیم های ثبت شده در دیتابیس
+$data = [];
 $q = "SELECT username FROM Persons";
 if ($result = $conn->query($q)) {
     while ($row = $result->fetch_assoc()) {
@@ -1117,7 +1145,8 @@ if (in_array($username, $data)) {
             }
         }
     }
-} else {
+}
+else {
     //اگر آیدی یونیک ثبت نشده باشد ، پیغام زیر داده میشود
     $q = "SELECT unique_id FROM Persons";
     if ($result = $conn->query($q)) {
@@ -1149,113 +1178,33 @@ if ($result = $conn->query($q_id)) {
 // --------------------------------------------------- get current user position in database -------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-$position = null;
+$pos_array = [];
 $q_id = "SELECT position FROM Persons WHERE unique_id=$user_id";
 if ($result = $conn->query($q_id)) {
     $row = $result->fetch_assoc();
     $position = $row['position'];
-    settype($position, "integer");
-}
 
+    $temp_pos = explode("|", $position);
 
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------- ADMIN --------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// دریافت ادمین
-$sql = "SELECT unique_id FROM Persons WHERE position=1";
-if ($result = $conn->query($sql)) {
-    $row = $result->fetch_assoc();
-    $admin = $row['unique_id'];
-}
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------- CEOs --------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// دریافت مدیر عامل ها
-$sql = "SELECT unique_id FROM Persons WHERE position=6";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $ceoceo[] = $row['unique_id'];
-    }
-}
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------- INFORMATICs ---------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//دریافت حسابدار ها
-
-$sql = "SELECT unique_id FROM Persons WHERE position=2";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $informatics_ids[] = $row['unique_id'];
+    foreach ($temp_pos as $temp_po){
+        settype($temp_po, "integer");
+        $pos_array[] = $temp_po;
     }
 }
 
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------- FINANCIALs ---------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+$roll = implode(',', $pos_array);
 
-//دریافت حسابدار ها
 
-$sql = "SELECT unique_id FROM Persons WHERE position=3";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $financials_ids[] = $row['unique_id'];
-    }
-}
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------- SUPPORTs ---------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//دریافت حسابدار ها
-
-$sql = "SELECT unique_id FROM Persons WHERE position=4";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $supports_ids[] = $row['unique_id'];
-    }
-}
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------- SERVICESs ---------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//دریافت حسابدار ها
-
-$sql = "SELECT unique_id FROM Persons WHERE position=5";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $services_ids[] = $row['unique_id'];
-    }
-}
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-$all_units = (in_array($chat_id, $financials_ids) or in_array($chat_id, $services_ids) or in_array($chat_id, $supports_ids) or in_array($chat_id, $informatics_ids));
-
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------- UNIT MANAGER (PROJECT MANAGERSs) -------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//مدیر پروژه ها را دریافت می کند
-$sql = "SELECT unique_id FROM Persons WHERE position=7";
-if ($result = $conn->query($sql)) {
-    while ($row = $result->fetch_assoc()) {
-        $project_managers[] = $row['unique_id'];
-    }
-}
-
+$all_units = (in_array(2, $pos_array) or in_array(3, $pos_array) or in_array(4, $pos_array) or in_array(5, $pos_array));
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------- CODE FOR CEO --------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if (in_array($chat_id, $ceoceo)) {
+if (in_array(6, $pos_array) and !$all_units and !in_array(6, $pos_array)) {
     if ($Text_orgi == "/start") {
         delete_undone_request($conn, $bb);
-        $inlineKeyboardoption = [
-            [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
-        ];
-        $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-        $contenttmp = array('chat_id' => $chat_id, "text" => "انتخاب کنید:", 'reply_markup' => $Keyboard);
-        $bot->sendText($contenttmp);
+        ceo_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
     }
@@ -1317,7 +1266,8 @@ if ($callback_data[0] == "x") {
     }
 
     //اگر کال بک، حرف اول آن، r باشد، یعنی درخواست مورد نظر ، عدم تأیید است، آیدی درخواست مورد نظر در ادامه r وجود دارد
-} elseif ($callback_data[0] == 'r') {
+}
+elseif ($callback_data[0] == 'r') {
     $getcbdata = str_replace('r', '', $callback_data);
     settype($getcbdata, "integer");
     $q_up = "UPDATE Requests SET reason='setreasonforreject', rejector='$bb' WHERE id=$getcbdata";
@@ -1325,7 +1275,8 @@ if ($callback_data[0] == "x") {
         $content = array("chat_id" => $chat_id, "text" => "متن توضیح برای عدم تأیید درخواست را وارد کنید(حداکثر 300 کاراکتر):");
         $bot->sendText($content);
     }
-} elseif ($callback_data[0] == 'd') {
+}
+elseif ($callback_data[0] == 'd') {
     $getcbdata = str_replace('d', '', $callback_data);
     settype($getcbdata, "integer");
     $q_up = "UPDATE Requests SET req_status=9, is_closed=4, done_date='$today_date', done_time='$time_now' WHERE id='$getcbdata'";
@@ -1384,7 +1335,8 @@ if ($callback_data[0] == "x") {
         $bot->sendText($content);
     }
 
-} elseif ($callback_data[0] == 'j') {
+}
+elseif ($callback_data[0] == 'j') {
 
     $getcbdata = str_replace('j', '', $callback_data);
     settype($getcbdata, "integer");
@@ -1405,7 +1357,8 @@ if ($callback_data[0] == "x") {
     $content = array("chat_id" => $chat_id, "text" => "لطفا میزان رضایت خود را از بین گزینه های زیر انتخاب کنید.", 'reply_markup' => $Keyboard);
     $bot->sendText($content);
 
-} elseif ($callback_data[0] == 'f') {
+}
+elseif ($callback_data[0] == 'f') {
     $getcbdata = str_replace('f', '', $callback_data);
     settype($getcbdata, "integer");
 
@@ -1414,7 +1367,8 @@ if ($callback_data[0] == "x") {
         $content = array("chat_id" => $chat_id, "text" => "عدم رضایت برای این درخواست ثبت شد.");
         $bot->sendText($content);
     }
-} elseif ($callback_data[0] == 'g') {
+}
+elseif ($callback_data[0] == 'g') {
     $getcbdata = str_replace('g', '', $callback_data);
     settype($getcbdata, "integer");
 
@@ -1423,7 +1377,8 @@ if ($callback_data[0] == "x") {
         $content = array("chat_id" => $chat_id, "text" => "رضایت کم برای این درخواست ثبت شد.");
         $bot->sendText($content);
     }
-} elseif ($callback_data[0] == 'h') {
+}
+elseif ($callback_data[0] == 'h') {
     $getcbdata = str_replace('h', '', $callback_data);
     settype($getcbdata, "integer");
 
@@ -1432,7 +1387,8 @@ if ($callback_data[0] == "x") {
         $content = array("chat_id" => $chat_id, "text" => "رضایت نسبی برای این درخواست ثبت شد.");
         $bot->sendText($content);
     }
-} elseif ($callback_data[0] == 'i') {
+}
+elseif ($callback_data[0] == 'i') {
     $getcbdata = str_replace('i', '', $callback_data);
     settype($getcbdata, "integer");
 
@@ -1441,7 +1397,8 @@ if ($callback_data[0] == "x") {
         $content = array("chat_id" => $chat_id, "text" => "رضایت متوسط برای این درخواست ثبت شد.");
         $bot->sendText($content);
     }
-} elseif ($callback_data[0] == 'k') {
+}
+elseif ($callback_data[0] == 'k') {
     $getcbdata = str_replace('k', '', $callback_data);
     settype($getcbdata, "integer");
 
@@ -1461,16 +1418,16 @@ if ($callback_data[0] == "x") {
 // -------------------------------------------------------------------- CODE FOR ADMIN --------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if ($chat_id == $admin) {
+if (in_array(1, $pos_array)) {
     if ($Text_orgi == "/start") {
         reset_admin($conn, $bb);
         admin_clipboard($bot, $chat_id);
 
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
-        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position);
+        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $pos_array, $roll);
 
-        $q_id = "SELECT * FROM Persons WHERE status='getname' OR status='getuser' OR status='change' OR status='changeus' OR status='changeuss'";
+        $q_id = "SELECT * FROM Persons WHERE status='getname' OR status='getuser' OR status='change' OR status='changeus' OR status='changeuss' OR status='getusadd'";
         if ($result = $conn->query($q_id)) {
             if ($result->num_rows != 0) {
                 $row = $result->fetch_assoc();
@@ -1484,7 +1441,8 @@ if ($chat_id == $admin) {
                         $contenttmp = array('chat_id' => $chat_id, "text" => "یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
                         $bot->sendText($contenttmp);
                     }
-                } elseif ($row['status'] == 'getuser') {
+                }
+                elseif ($row['status'] == 'getuser') {
                     if (strlen($Text_orgi) >= 30) {
                         $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
                         $bot->sendText($contenttmp);
@@ -1514,7 +1472,8 @@ if ($chat_id == $admin) {
                         }
                     }
 
-                } elseif ($row['status'] == 'change') {
+                }
+                elseif ($row['status'] == 'change') {
                     $sql = "SELECT * FROM Persons WHERE username='$Text_orgi'";
                     if ($res = $conn->query($sql)) {
                         if ($res->num_rows == 0) {
@@ -1526,23 +1485,25 @@ if ($chat_id == $admin) {
 
                         } else {
                             $row = $res->fetch_assoc();
-                            if ($row['position'] == 'admin') {
+                            $po = $row['position'];
+                            $temp_pos = explode("|", $po);
+                            if (in_array('1', $temp_pos)) {
                                 stop_changing($conn);
                                 $contenttmp = array('chat_id' => $chat_id, "text" => "این کار امکان پذیر نیست. یوزرنیم وارد شده متعلق به ادمین است!");
                                 $bot->sendText($contenttmp);
                                 admin_clipboard($bot, $chat_id);
                             } else {
-                                if ($row['position'] == 7) {
+                                if (in_array('7', $temp_pos)) {
                                     $stat = "مدیر پروژه";
-                                } elseif ($row['position'] == 2) {
+                                } elseif (in_array('2', $temp_pos)) {
                                     $stat = "انفورماتیک";
-                                } elseif ($row['position'] == 3) {
+                                } elseif (in_array('3', $temp_pos)) {
                                     $stat = "مالی";
-                                } elseif ($row['position'] == 4) {
+                                } elseif (in_array('4', $temp_pos)) {
                                     $stat = "پشتیبانی";
-                                } elseif ($row['position'] == 5) {
+                                } elseif (in_array('5', $temp_pos)) {
                                     $stat = "خدمات";
-                                } elseif ($row['position'] == 6) {
+                                } elseif (in_array('6', $temp_pos)) {
                                     $stat = "مدیر عامل";
                                 } else {
                                     $stat = "نامشخص";
@@ -1571,7 +1532,8 @@ if ($chat_id == $admin) {
                             }
                         }
                     }
-                } elseif ($row['status'] == 'changeus') {
+                }
+                elseif ($row['status'] == 'changeus') {
                     $sql = "SELECT * FROM Persons WHERE username='$Text_orgi'";
                     if ($res = $conn->query($sql)) {
                         if ($res->num_rows == 0) {
@@ -1595,7 +1557,8 @@ if ($chat_id == $admin) {
                             $bot->sendText($contenttmp);
                         }
                     }
-                } elseif ($row['status'] == 'changeuss') {
+                }
+                elseif ($row['status'] == 'changeuss') {
                     if (strlen($Text_orgi) >= 30) {
                         $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
                         $bot->sendText($contenttmp);
@@ -1605,6 +1568,39 @@ if ($chat_id == $admin) {
                         $contenttmp = array('chat_id' => $chat_id, "text" => "یوزرنیم ثبت شده شخص مورد نظر با موفقیت تغییر داده شد.");
                         $bot->sendText($contenttmp);
                         admin_clipboard($bot, $chat_id);
+                    }
+                }
+                elseif ($row['status'] == 'getusadd') {
+                    if (strlen($Text_orgi) >= 30) {
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "تعداد کاراکتر ها بیش از حد مجاز است، متن کوتاه تری را وارد کنید:");
+                        $bot->sendText($contenttmp);
+                    } else {
+                        $sql = "SELECT * FROM Persons WHERE username='$Text_orgi'";
+                        $result = $conn->query($sql);
+                        if ($result->num_rows > 0) {
+
+                            $q_up = "UPDATE Persons SET status='whatadd' WHERE username='$Text_orgi'";
+                            $conn->query($q_up);
+
+                            $q = "DELETE FROM Persons WHERE status='getusadd'";
+                            $conn->query($q);
+
+                            $inlineKeyboardoption = [
+                                [$bot->buildInlineKeyBoardButton("انفورماتیک", '', "cadd2"),
+                                $bot->buildInlineKeyBoardButton("مالی", '', "cadd3")],
+                                [$bot->buildInlineKeyBoardButton("پشتیبانی", '', "cadd4"),
+                                $bot->buildInlineKeyBoardButton("خدمات", '', "cadd5")],
+                                [$bot->buildInlineKeyBoardButton("مدیر عامل", '', "cadd6")],
+                            ];
+                            $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
+                            $contenttmp = array('chat_id' => $chat_id, "text" => "سمت مورد نظر را برای افزودن به این کاربر انتخاب کنید:", 'reply_markup' => $Keyboard);
+                            $bot->sendText($contenttmp);
+                        } else {
+                            reset_admin($conn, $bb);
+                            $contenttmp = array('chat_id' => $chat_id, "text" => "این یوزرنیم در سامانه تعریف نشده است!");
+                            $bot->sendText($contenttmp);
+                            admin_clipboard($bot, $chat_id);
+                        }
                     }
                 }
             }
@@ -1622,18 +1618,17 @@ if ($all_units) {
         accounting_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
-        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $position);
+        manage_get_num($conn, $bot, $bb, $Text_orgi, $chat_id, $pos_array, $roll);
     }
 }
 
 
 // برای مدیر واحد
 // ------------------------------------------------------------------------------------------------------------------------------------
-if (in_array($chat_id, $project_managers)) {
+if (in_array(7, $pos_array)) {
 
     if ($Text_orgi == "/start") {
         delete_undone_request($conn, $bb);
-
         projectmanager_clipboard($bot, $chat_id);
     } else {
         req_status_process($conn, $bot, $chat_id, $bb, $Text_orgi);
@@ -1643,36 +1638,36 @@ if (in_array($chat_id, $project_managers)) {
 switch ($callback_data) {
 //    درخواست پرداخت
     case "paymentreq":
-        if (in_array($chat_id, $project_managers)) {
+        if (in_array(7, $pos_array)) {
             delete_undone_request($conn, $bb);
             create_new_req($conn, $bot, $bb, $chat_id);
         }
         break;
 //  درخواست های من
     case "myreq":
-        if ($all_units or in_array($chat_id, $project_managers) or $chat_id == $admin) {
+        if ($all_units or in_array(7, $pos_array) or in_array(1, $pos_array)) {
             if ($all_units){
                 reset_unit($conn, $bb);
-            }elseif(in_array($chat_id, $project_managers)){
+            }elseif(in_array(7, $pos_array)){
                 delete_undone_request($conn, $bb);
-            }elseif ($chat_id == $admin){
+            }elseif(in_array(1, $pos_array)){
                 reset_admin($conn, $bb);
             }
             my_req($conn, $bot, $chat_id, $bb);
-            if (in_array($chat_id, $project_managers)) {
-                projectmanager_clipboard($bot, $chat_id);
-            }
-            if ($chat_id == $admin) {
-                admin_clipboard($bot, $chat_id);
-            }
-            if ($all_units) {
-                accounting_clipboard($bot, $chat_id);
-            }
+//            if (in_array(7, $pos_array)) {
+//                projectmanager_clipboard($bot, $chat_id);
+//            }
+//            if (in_array(1, $pos_array)) {
+//                admin_clipboard($bot, $chat_id);
+//            }
+//            if ($all_units) {
+//                accounting_clipboard($bot, $chat_id);
+//            }
         }
         break;
 //انتخاب واحد انفورماتیک
     case "choose_informatic":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
@@ -1680,14 +1675,13 @@ switch ($callback_data) {
             $result = $conn->query($q_up);
 
             $content = array("chat_id" => $chat_id, "text" => "لطفا واحد درخواست دهنده را وارد کنید:");
-//            $content = array("chat_id" => $chat_id, "text" => "لطفا عنوان درخواست خود را با رعایت اصول حفاظتی وارد کنید_حداکثر 200 کاراکتر:");
             $bot->sendText($content);
         }
         break;
 
     //انتخاب واحد خدمات
     case "choose_services":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
@@ -1701,7 +1695,7 @@ switch ($callback_data) {
 
     //انتخاب واحد پشتیبانی
     case "choose_support":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
@@ -1715,7 +1709,7 @@ switch ($callback_data) {
 
     //انتخاب واحد مالی
     case "choose_financial":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             delete_half_made_user($conn);
             stop_changing($conn);
             stop_reason_message($conn, $bb);
@@ -1729,7 +1723,7 @@ switch ($callback_data) {
 
 //تأیید درخواست پرداخت
     case "conf_pm":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             $q_id = "SELECT * FROM Persons WHERE unique_id=$user_id";
             if ($result = $conn->query($q_id)) {
                 $row = $result->fetch_assoc();
@@ -1749,7 +1743,7 @@ switch ($callback_data) {
                         $result = $conn->query($q_up);
 
                         // دریافت کسانی که واحد مورد نظر هستند
-                        $sql = "SELECT unique_id FROM Persons WHERE position=$unit";
+                        $sql = "SELECT unique_id FROM Persons WHERE position LIKE CONCAT('%', '$unit', '%')";
                         if ($result = $conn->query($sql)) {
                             if ($result->num_rows != 0) {
                                 while ($row = $result->fetch_assoc()) {
@@ -1795,25 +1789,20 @@ switch ($callback_data) {
                     $bot->sendText($content);
                 }
             }
-            if (in_array($chat_id, $project_managers)) {
-                projectmanager_clipboard($bot, $chat_id);
-            } elseif (in_array($chat_id, $ceoceo)) {
-                $inlineKeyboardoption = [
-                    [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
-                ];
-                $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
-                $bot->sendText($contenttmp);
-            } elseif ($chat_id == $admin) {
-                admin_clipboard($conn, $chat_id);
-            } elseif ($all_units) {
-                accounting_clipboard($bot, $chat_id);
-            }
+//            if (in_array(7, $pos_array)) {
+//                projectmanager_clipboard($bot, $chat_id);
+//            }
+//            elseif (in_array(1, $pos_array)) {
+//                admin_clipboard($conn, $chat_id);
+//            }
+//            elseif ($all_units) {
+//                accounting_clipboard($bot, $chat_id);
+//            }
         }
         break;
 //لغو درخواست پرداخت
     case "cancle_pm":
-        if (in_array($chat_id, $project_managers) || $all_units || in_array($chat_id, $ceoceo) || $chat_id == $admin) {
+        if (in_array(7, $pos_array) || $all_units || in_array(6, $pos_array) || in_array(1, $pos_array)) {
             $q_exists = "SELECT id FROM Requests WHERE created_by=$bb AND is_closed=1";
             if ($result = $conn->query($q_exists)) {
                 $row = $result->fetch_assoc();
@@ -1824,20 +1813,15 @@ switch ($callback_data) {
                     if ($conn->query($d_q) === TRUE) {
                         $contenttmp = array('chat_id' => $chat_id, "text" => "درخواست شما لغو شد.");
                         $bot->sendText($contenttmp);
-                        if (in_array($chat_id, $project_managers)) {
-                            projectmanager_clipboard($bot, $chat_id);
-                        } elseif ($all_units) {
-                            accounting_clipboard($bot, $chat_id);
-                        } elseif ($chat_id == $admin) {
-                            admin_clipboard($bot, $chat_id);
-                        } elseif (in_array($chat_id, $ceoceo)) {
-                            $inlineKeyboardoption = [
-                                [$bot->buildInlineKeyBoardButton("ثبت درخواست", '', "newreqceo")],
-                            ];
-                            $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                            $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید", 'reply_markup' => $Keyboard);
-                            $bot->sendText($contenttmp);
-                        }
+//                        if (in_array(7, $pos_array)) {
+//                            projectmanager_clipboard($bot, $chat_id);
+//                        } elseif ($all_units) {
+//                            accounting_clipboard($bot, $chat_id);
+//                        } elseif (in_array(1, $pos_array)) {
+//                            admin_clipboard($bot, $chat_id);
+//                        } elseif (in_array(6, $pos_array)) {
+//                            ceo_clipboard($bot, $chat_id);
+//                        }
                     }
                 }
             }
@@ -1856,7 +1840,7 @@ switch ($callback_data) {
         if ($all_units) {
             reset_unit($conn, $bb);
 
-            $q_exists = "SELECT * FROM Requests WHERE req_status=1 AND is_closed=2 AND unit='$position' ORDER BY register_date DESC, register_time DESC LIMIT 30";
+            $q_exists = "SELECT * FROM Requests WHERE req_status=1 AND is_closed=2 AND (unit IN ($roll)) ORDER BY register_date DESC, register_time DESC LIMIT 30";
 
             if ($result = $conn->query($q_exists)) {
                 if ($result->num_rows == 0) {
@@ -1904,7 +1888,7 @@ switch ($callback_data) {
         if ($all_units) {
             reset_unit($conn, $bb);
 
-            $q_exists = "SELECT * FROM Requests WHERE req_status=3 AND is_closed=3 AND unit='$position' ORDER BY register_date DESC, register_time DESC LIMIT 30";
+            $q_exists = "SELECT * FROM Requests WHERE req_status=3 AND is_closed=3 AND (unit IN ($roll)) ORDER BY register_date DESC, register_time DESC LIMIT 30";
 
             if ($result = $conn->query($q_exists)) {
                 if ($result->num_rows == 0) {
@@ -1955,9 +1939,9 @@ switch ($callback_data) {
 
 //نمایش تمام درخواست ها
     case "everything":
-        if ($all_units or $chat_id == $admin) {
+        if ($all_units or in_array(1, $pos_array)) {
             delete_undone_request($conn, $bb);
-            if ($chat_id == $admin) {
+            if (in_array(1, $pos_array)) {
                 delete_half_made_user($conn);
                 stop_changing($conn);
             }
@@ -1972,13 +1956,14 @@ switch ($callback_data) {
         break;
 //مدیریت حساب ها(تنظیمات)
     case "setting":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $inlineKeyboardoption = [
-                [$bot->buildInlineKeyBoardButton("افزودن سمت", '', "newpost")],
-                [$bot->buildInlineKeyBoardButton("تغییر سمت", '', "changepost")],
-                [$bot->buildInlineKeyBoardButton("تغییر یوزرنیم", '', "changeusername")],
+                [$bot->buildInlineKeyBoardButton("افزودن کاربر جدید", '', "newpost")],
+                [$bot->buildInlineKeyBoardButton("افزودن سمت به کاربران سامانه", '', "addpost")],
+                [$bot->buildInlineKeyBoardButton("تغییر سمت کاربر سامانه", '', "changepost")],
+                [$bot->buildInlineKeyBoardButton("تغییر یوزرنیم کاربر سامانه", '', "changeusername")],
             ];
             $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
             $contenttmp = array('chat_id' => $chat_id, "text" => "یکی از گزینه های زیر را انتخاب کنید:", 'reply_markup' => $Keyboard);
@@ -1987,7 +1972,7 @@ switch ($callback_data) {
         break;
 //افزودن یک شخص جدید به ربات
     case "newpost":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "نام کامل شخص مورد نظر را وارد کنید");
@@ -1998,7 +1983,7 @@ switch ($callback_data) {
         break;
 //تغییر سمت شخص مورد نظر
     case "changepost":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $qu = "INSERT INTO Persons (status) VALUES ('change')";
@@ -2009,7 +1994,7 @@ switch ($callback_data) {
         break;
 //تغییر یوزرنیم یک شخص
     case "changeusername":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $qu = "INSERT INTO Persons (status) VALUES ('changeus')";
@@ -2020,8 +2005,8 @@ switch ($callback_data) {
         break;
 //نمایش وضعیت مدیر پروژه که در حال اضافه شدن است
     case "ppm":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=7 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='7' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2045,8 +2030,8 @@ switch ($callback_data) {
         break;
 //نمایش وضعیت انفورماتیک که در حال اضافه شدن است
     case "p_anformatic":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=2 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='2' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2069,8 +2054,8 @@ switch ($callback_data) {
         break;
     //نمایش وضعیت مالی که در حال اضافه شدن است
     case "p_financial":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=3 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='3' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2093,8 +2078,8 @@ switch ($callback_data) {
         break;
     //نمایش وضعیت پشتیبانی که در حال اضافه شدن است
     case "p_support":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=4 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='4' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2117,8 +2102,8 @@ switch ($callback_data) {
         break;
     //نمایش وضعیت خدمات که در حال اضافه شدن است
     case "p_service":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=5 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='5' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2141,8 +2126,8 @@ switch ($callback_data) {
         break;
 //نمایش وضعیت مدیر عامل که در حال اضافه شدن است
     case "pseo":
-        if ($chat_id == $admin) {
-            $q_up = "UPDATE Persons SET position=6 WHERE status='getpos'";
+        if (in_array(1, $pos_array)) {
+            $q_up = "UPDATE Persons SET position='6' WHERE status='getpos'";
             $result = $conn->query($q_up);
             $q_up = "UPDATE Persons SET status='choosing' WHERE status='getpos'";
             $result = $conn->query($q_up);
@@ -2165,7 +2150,7 @@ switch ($callback_data) {
         break;
 // تأیید ساخت حساب
     case "confcreate":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='choosing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
@@ -2176,21 +2161,21 @@ switch ($callback_data) {
                     $bot->sendText($contenttmp);
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //لغو ساخت حساب جدید
     case "canclecreate":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             delete_half_made_user($conn);
             $contenttmp = array('chat_id' => $chat_id, "text" => "درخواست شما لغو شد.");
             $bot->sendText($contenttmp);
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //حذف یک کاربر موجود در ربات
     case "changeremove":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
@@ -2202,16 +2187,16 @@ switch ($callback_data) {
             }
             $contenttmp = array('chat_id' => $chat_id, "text" => "کاربر مورد نظر از لیست کاربران مجاز این ربات حذف شد.");
             $bot->sendText($contenttmp);
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //تغییر سمت به مدیر عامل
     case "changetoceo":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=6 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='6' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2222,16 +2207,16 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //تغییر سمت به مدیر پروژه
     case "changetopm":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=7 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='7' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2242,17 +2227,17 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 
 //تغییر سمت به انفورماتیک
     case "changetoinformatic":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=2 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='2' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2263,16 +2248,16 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
     //تغییر سمت به مالی
     case "changetofinancial":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=3 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='3' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2283,16 +2268,16 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
     //تغییر سمت به پشتیبانی
     case "changetosupport":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=4 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='4' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2303,16 +2288,16 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
     //تغییر سمت به خدمات
     case "changetoservice":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             $sql = "SELECT * FROM Persons WHERE status='changing'";
             if ($result = $conn->query($sql)) {
                 if ($result->num_rows != 0) {
-                    $q_up = "UPDATE Persons SET position=5 WHERE status='changing'";
+                    $q_up = "UPDATE Persons SET position='5' WHERE status='changing'";
                     if ($result = $conn->query($q_up)) {
                         $q_up = "UPDATE Persons SET status=NULL WHERE status='changing'";
                         $result = $conn->query($q_up);
@@ -2323,41 +2308,39 @@ switch ($callback_data) {
                     }
                 }
             }
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 
 //ثبت درخواست جدید مدیر عامل
     case "newreqceo":
-        if (in_array($chat_id, $ceoceo)) {
+        if (in_array(6, $pos_array)) {
             delete_undone_request($conn, $bb);
             create_new_req($conn, $bot, $bb, $chat_id);
         }
         break;
 //لیست کاربران
     case "admin_users_list":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             sleep(1);
             $bot->sendText($contenttmp);
             users_list($conn, $bot, $chat_id);
-            sleep(2);
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //        درخواست جدید برای ادمین
     case "admin_new_req":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
-
             create_new_req($conn, $bot, $bb, $chat_id);
         }
         break;
     //        خروجی گرفتن اکسل از گزارشات
     case "adminexcel":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $inlineKeyboardoption = [
@@ -2374,62 +2357,214 @@ switch ($callback_data) {
         break;
 //اکسل از درخواست های بررسی نشده
     case "adminexcelopen":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
             export_excel_open($conn, $bot, $chat_id);
 
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //اکسل از درخواست های انجام شده
     case "adminexceldone":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
             export_excel_done($conn, $bot, $chat_id);
 
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //اکسل از همه درخواست ها
     case "adminexcelall":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
             export_excel_all($conn, $bot, $chat_id);
 
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
 //        درخواست های تأیید شده
     case "adminexcelaccept":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
             export_excel_accept($conn, $bot, $chat_id);
 
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
         }
         break;
     //        درخواست های رد شده
     case "adminexcelreject":
-        if ($chat_id == $admin) {
+        if (in_array(1, $pos_array)) {
             reset_admin($conn, $bb);
 
             $contenttmp = array('chat_id' => $chat_id, "text" => "منتظر بمانید...");
             $bot->sendText($contenttmp);
             export_excel_reject($conn, $bot, $chat_id);
 
-            admin_clipboard($bot, $chat_id);
+//            admin_clipboard($bot, $chat_id);
+        }
+        break;
+
+    case "addpost":
+        if (in_array(1, $pos_array)) {
+            reset_admin($conn, $bb);
+
+            $qu = "INSERT INTO Persons (status) VALUES ('getusadd')";
+            $result = $conn->query($qu);
+            $contenttmp = array('chat_id' => $chat_id, "text" => "یوزرنیم شخص مورد نظر را بدون علامت @ وارد کنید_حداکثر 30 کاراکتر:");
+            $bot->sendText($contenttmp);
+        }
+        break;
+
+    case "cadd2":
+        if (in_array(1, $pos_array)) {
+            $counter = 0;
+            $sql = "SELECT * FROM Persons WHERE status='whatadd'";
+            if ($result = $conn->query($sql)) {
+                if ($result->num_rows != 0) {
+                    $row = $result->fetch_assoc();
+                    $poses = $row['position'];
+                    $temp_pos = explode("|", $poses);
+
+                    if (in_array('2', $temp_pos)){
+                        reset_admin($conn, $bb);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => ".این سمت قبلا برای این کاربر ثبت شده است");
+                    }else{
+                        $temp_pos[] = '2';
+                        $str_pos = implode("|", $temp_pos);
+                        $q_up = "UPDATE Persons SET position='$str_pos' WHERE status='whatadd'";
+                        $conn->query($q_up);
+                        $q = "UPDATE Persons SET status=NULL WHERE status='whatadd'";
+                        $conn->query($q);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "سمت انفورماتیک به این کاربر اضافه شد.");
+                    }
+                    $bot->sendText($contenttmp);
+//                    admin_clipboard($bot, $chat_id);
+                }
+            }
+        }
+        break;
+    case "cadd3":
+        if (in_array(1, $pos_array)) {
+            $counter = 0;
+            $sql = "SELECT * FROM Persons WHERE status='whatadd'";
+            if ($result = $conn->query($sql)) {
+                if ($result->num_rows != 0) {
+                    $row = $result->fetch_assoc();
+                    $poses = $row['position'];
+                    $temp_pos = explode("|", $poses);
+
+                    if (in_array('3', $temp_pos)){
+                        reset_admin($conn, $bb);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => ".این سمت قبلا برای این کاربر ثبت شده است");
+                    }else{
+                        $temp_pos[] = '3';
+                        $str_pos = implode("|", $temp_pos);
+                        $q_up = "UPDATE Persons SET position='$str_pos' WHERE status='whatadd'";
+                        $conn->query($q_up);
+                        $q = "UPDATE Persons SET status=NULL WHERE status='whatadd'";
+                        $conn->query($q);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "سمت مالی به این کاربر اضافه شد.");
+                    }
+                    $bot->sendText($contenttmp);
+//                    admin_clipboard($bot, $chat_id);
+                }
+            }
+        }
+        break;
+    case "cadd4":
+        if (in_array(1, $pos_array)) {
+            $counter = 0;
+            $sql = "SELECT * FROM Persons WHERE status='whatadd'";
+            if ($result = $conn->query($sql)) {
+                if ($result->num_rows != 0) {
+                    $row = $result->fetch_assoc();
+                    $poses = $row['position'];
+                    $temp_pos = explode("|", $poses);
+
+                    if (in_array('4', $temp_pos)){
+                        reset_admin($conn, $bb);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => ".این سمت قبلا برای این کاربر ثبت شده است");
+                    }else{
+                        $temp_pos[] = '4';
+                        $str_pos = implode("|", $temp_pos);
+                        $q_up = "UPDATE Persons SET position='$str_pos' WHERE status='whatadd'";
+                        $conn->query($q_up);
+                        $q = "UPDATE Persons SET status=NULL WHERE status='whatadd'";
+                        $conn->query($q);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "سمت پشتیبانی به این کاربر اضافه شد.");
+                    }
+                    $bot->sendText($contenttmp);
+//                    admin_clipboard($bot, $chat_id);
+                }
+            }
+        }
+        break;
+    case "cadd5":
+        if (in_array(1, $pos_array)) {
+            $counter = 0;
+            $sql = "SELECT * FROM Persons WHERE status='whatadd'";
+            if ($result = $conn->query($sql)) {
+                if ($result->num_rows != 0) {
+                    $row = $result->fetch_assoc();
+                    $poses = $row['position'];
+                    $temp_pos = explode("|", $poses);
+
+                    if (in_array('5', $temp_pos)){
+                        reset_admin($conn, $bb);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => ".این سمت قبلا برای این کاربر ثبت شده است");
+                    }else{
+                        $temp_pos[] = '5';
+                        $str_pos = implode("|", $temp_pos);
+                        $q_up = "UPDATE Persons SET position='$str_pos' WHERE status='whatadd'";
+                        $conn->query($q_up);
+                        $q = "UPDATE Persons SET status=NULL WHERE status='whatadd'";
+                        $conn->query($q);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "سمت خدمات به این کاربر اضافه شد.");
+                    }
+                    $bot->sendText($contenttmp);
+//                    admin_clipboard($bot, $chat_id);
+                }
+            }
+        }
+        break;
+    case "cadd6":
+        if (in_array(1, $pos_array)) {
+            $counter = 0;
+            $sql = "SELECT * FROM Persons WHERE status='whatadd'";
+            if ($result = $conn->query($sql)) {
+                if ($result->num_rows != 0) {
+                    $row = $result->fetch_assoc();
+                    $poses = $row['position'];
+                    $temp_pos = explode("|", $poses);
+
+                    if (in_array('6', $temp_pos)){
+                        reset_admin($conn, $bb);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => ".این سمت قبلا برای این کاربر ثبت شده است");
+                    }else{
+                        $temp_pos[] = '6';
+                        $str_pos = implode("|", $temp_pos);
+                        $q_up = "UPDATE Persons SET position='$str_pos' WHERE status='whatadd'";
+                        $conn->query($q_up);
+                        $q = "UPDATE Persons SET status=NULL WHERE status='whatadd'";
+                        $conn->query($q);
+                        $contenttmp = array('chat_id' => $chat_id, "text" => "سمت مدیر عامل به این کاربر اضافه شد.");
+                    }
+                    $bot->sendText($contenttmp);
+//                    admin_clipboard($bot, $chat_id);
+                }
+            }
         }
         break;
 }

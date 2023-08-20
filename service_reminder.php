@@ -36,7 +36,7 @@ if ($conn->connect_error) {
 mysqli_set_charset($conn, "utf8mb4");
 
 
-$sql = "SELECT unique_id FROM Persons WHERE position=5";
+$sql = "SELECT unique_id FROM Persons WHERE position LIKE CONCAT('%', '5', '%')";
 if ($result = $conn->query($sql)) {
     if ($result->num_rows != 0) {
         while ($ro = $result->fetch_assoc()) {
