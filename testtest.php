@@ -13,8 +13,6 @@ $users=['mohammadreisii'=>['role'=>'admin','name'=>'mohammad'], 'alirp78'=>['rol
  function get_request_details(){
      $token = "1754660216:UbhE2VljgXFVVdLFb5lHRTgitScKXFosSCEveTRE";
 
-// Set session variables
-
      $bot = new balebot($token);
 
      return $bot;

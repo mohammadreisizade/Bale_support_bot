@@ -1493,21 +1493,28 @@ if (in_array(1, $pos_array)) {
                                 $bot->sendText($contenttmp);
                                 admin_clipboard($bot, $chat_id);
                             } else {
+                                $stat = null;
                                 if (in_array('7', $temp_pos)) {
-                                    $stat = "مدیر پروژه";
-                                } elseif (in_array('2', $temp_pos)) {
-                                    $stat = "انفورماتیک";
-                                } elseif (in_array('3', $temp_pos)) {
-                                    $stat = "مالی";
-                                } elseif (in_array('4', $temp_pos)) {
-                                    $stat = "پشتیبانی";
-                                } elseif (in_array('5', $temp_pos)) {
-                                    $stat = "خدمات";
-                                } elseif (in_array('6', $temp_pos)) {
-                                    $stat = "مدیر عامل";
-                                } else {
-                                    $stat = "نامشخص";
+                                    $stat = $stat ." ". "مدیر پروژه";
                                 }
+                                if (in_array('2', $temp_pos)) {
+                                    $stat = $stat ." ". "انفورماتیک";
+                                }
+                                if (in_array('3', $temp_pos)) {
+                                    $stat = $stat ." ". "مالی";
+                                }
+                                if (in_array('4', $temp_pos)) {
+                                    $stat = $stat ." ". "پشتیبانی";
+                                }
+                                if (in_array('5', $temp_pos)) {
+                                    $stat = $stat ." ". "خدمات";
+                                }
+                                if (in_array('6', $temp_pos)) {
+                                    $stat = $stat ." ". "مدیر عامل";
+                                }
+                                //  else {
+                                //     $stat = "نامشخص";
+                                // }
                                 $q_up = "UPDATE Persons SET status='changing' WHERE username='$Text_orgi'";
                                 $result = $conn->query($q_up);
                                 $sql = "SELECT * FROM Persons WHERE status='change'";
@@ -1741,22 +1748,22 @@ switch ($callback_data) {
                         $q_up = "UPDATE Requests SET req_status=1, register_date='$today_date', is_closed=2,
                     register_time='$time_now', name='$n' WHERE created_by=$bb AND is_closed=1";
                         $result = $conn->query($q_up);
-
+                        $target_roles = [];
                         // دریافت کسانی که واحد مورد نظر هستند
                         $sql = "SELECT unique_id FROM Persons WHERE position LIKE CONCAT('%', '$unit', '%')";
                         if ($result = $conn->query($sql)) {
                             if ($result->num_rows != 0) {
                                 while ($row = $result->fetch_assoc()) {
-                                    $data[] = $row['unique_id'];
+                                    $target_roles[] = $row['unique_id'];
                                 }
                             } else {
-                                $data = [];
+                                $target_roles = [];
                             }
                         }
                         $content = array("chat_id" => $chat_id, "text" => "درخواست شما با موفقیت ثبت شد.");
                         $bot->sendText($content);
                         // فرستادن درخواست به واحد مورد نظر
-                        foreach ($data as $u) {
+                        foreach ($target_roles as $u) {
                             $q_exists = "SELECT * FROM Requests WHERE id='$req_id'";
                             if ($result = $conn->query($q_exists)) {
                                 $row = $result->fetch_assoc();
