@@ -1307,15 +1307,15 @@ elseif ($callback_data[0] == 'd') {
         $id = $row['id'];
         $unit = $row['unit'];
         if ($unit == 2) {
-            $u = "انفورماتیک";
+            $uunit = "انفورماتیک";
         } elseif ($unit == 3) {
-            $u = "مالی";
+            $uunit = "مالی";
         } elseif ($unit == 4) {
-            $u = "پشتیبانی";
+            $uunit = "پشتیبانی";
         } elseif ($unit == 5) {
-            $u = "خدمات";
+            $uunit = "خدمات";
         } else {
-            $u = "نامشخص";
+            $uunit = "نامشخص";
         }
         $predict_date = $row['predict_date'];
         $accept_date = $row['accept_date'];
@@ -1331,7 +1331,7 @@ elseif ($callback_data[0] == 'd') {
             [$bot->buildInlineKeyBoardButton("ثبت میزان رضایت", '', "$cbdatasubmitrate")],
         ];
         $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-        $content = array("chat_id" => $requestor, "text" => "درخواست شما با مشخصات زیر توسط واحد $u انجام شد:\nعنوان : $title \nواحد درخواست دهنده : $requestor_unit\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time", 'reply_markup' => $Keyboard);
+        $content = array("chat_id" => $requestor, "text" => "درخواست شما با مشخصات زیر توسط واحد $uunit انجام شد:\nعنوان : $title \nواحد درخواست دهنده : $requestor_unit\nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time\nزمان پیشبینی انجام درخواست : $predict_date\nتاریخ تأیید درخواست : $accept_date\nساعت تأیید درخواست : $accept_time\nتاریخ تغییر وضعیت درخواست به انجام شده : $done_date\nساعت تغییر وضعیت درخواست به انجام شده : $done_time", 'reply_markup' => $Keyboard);
         $bot->sendText($content);
     }
 
@@ -1763,7 +1763,7 @@ switch ($callback_data) {
                         $content = array("chat_id" => $chat_id, "text" => "درخواست شما با موفقیت ثبت شد.");
                         $bot->sendText($content);
                         // فرستادن درخواست به واحد مورد نظر
-                        foreach ($target_roles as $u) {
+                        foreach ($target_roles as $target_u) {
                             $q_exists = "SELECT * FROM Requests WHERE id='$req_id'";
                             if ($result = $conn->query($q_exists)) {
                                 $row = $result->fetch_assoc();
@@ -1782,7 +1782,7 @@ switch ($callback_data) {
                                     $bot->buildInlineKeyBoardButton("تأیید", '', "$cbdataaccept")],
                                 ];
                                 $Keyboard = $bot->buildInlineKeyBoard($inlineKeyboardoption);
-                                $content = array("chat_id" => $u, "text" => "درخواست جدید:\nنام : $name\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time", 'reply_markup' => $Keyboard);
+                                $content = array("chat_id" => $target_u, "text" => "درخواست جدید:\nنام : $name\nواحد درخواست دهنده : $requestor_unit\nعنوان : $title \nتوضیحات : $description\nتاریخ ثبت درخواست : $date\nساعت ثبت درخواست : $time", 'reply_markup' => $Keyboard);
                                 $bot->sendText($content);
                             }
                             sleep(1);
